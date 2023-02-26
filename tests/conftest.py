@@ -4,7 +4,7 @@ from sqlite_utils import Database
 
 
 @pytest.fixture
-def cli_running() -> CliRunner:
+def cli_runner() -> CliRunner:
     return CliRunner()
 
 
