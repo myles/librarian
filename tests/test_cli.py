@@ -1,5 +1,6 @@
-from librarian import cli
 from importlib.metadata import version
+
+from librarian import cli
 
 
 def test_cli(cli_running):
