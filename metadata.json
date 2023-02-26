@@ -1,0 +1,15 @@
+{
+  "title": "Myles' Library",
+  "databases": {
+    "books": {
+      "title": "Books",
+      "tables": {
+        "books": {},
+        "authors": {},
+        "books_authors": {
+          "hidden": true
+        }
+      }
+    }
+  }
+}
