@@ -5,7 +5,12 @@
       "title": "Books",
       "tables": {
         "books": {
-          "sort": "title"
+          "sort": "title",
+          "plugins": {
+            "datasette-render-markdown": {
+              "columns": ["description"]
+            }
+          }
         },
         "authors": {
           "sort": "name"
