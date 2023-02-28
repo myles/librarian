@@ -2,7 +2,7 @@ import responses
 
 from librarian.collections.books import cli
 
-from ...openlibrary_responses import AUTHOR_RESPONSE, BOOK_RESPONSE
+from ... import openlibrary_responses
 
 
 @responses.activate
@@ -16,14 +16,21 @@ def test_add_book(mocker, cli_runner, mock_db):
         responses.Response(
             method="GET",
             url="https://openlibrary.org/isbn/0140328726.json",
-            json=BOOK_RESPONSE,
+            json=openlibrary_responses.BOOK_RESPONSE,
+        )
+    )
+    responses.add(
+        responses.Response(
+            method="GET",
+            url="https://openlibrary.org/works/OL45804W.json",
+            json=openlibrary_responses.WORK_RESPONSE,
         )
     )
     responses.add(
         responses.Response(
             method="GET",
             url="https://openlibrary.org/authors/OL34184A.json",
-            json=AUTHOR_RESPONSE,
+            json=openlibrary_responses.AUTHOR_RESPONSE,
         )
     )
 
