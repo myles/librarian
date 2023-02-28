@@ -4,9 +4,16 @@
     "books": {
       "title": "Books",
       "tables": {
-        "books": {},
-        "authors": {},
+        "books": {
+          "sort": "title"
+        },
+        "authors": {
+          "sort": "name"
+        },
         "books_authors": {
+          "hidden": true
+        },
+        "openlibrary_entities": {
           "hidden": true
         }
       }

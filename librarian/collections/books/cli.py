@@ -26,23 +26,42 @@ def add_book(isbn: str):
     db = Database(Settings.BOOK_DB_PATH)
     service.build_database(db)
 
+    # Fetch all the data from OpenLibrary.
     client = OpenLibraryClient()
 
     book = service.get_book_from_openlibrary(isbn=isbn, client=client)
-    book_row = service.upsert_book_from_open_library(book, db=db)
+    works = [
+        service.get_work_from_openlibrary(work_key, client=client)
+        for work_key in book.work_keys
+    ]
+
+    if works:
+        author_keys = [
+            author_key for work in works for author_key in work.author_keys
+        ]
+    else:
+        author_keys = book.author_keys
 
     authors = [
         service.get_author_from_openlibrary(
             openlibrary_key=author_key, client=client
         )
-        for author_key in book.author_keys
+        for author_key in author_keys
     ]
+
+    # Save everything to our first class tables.
+    book_row = service.upsert_book_from_open_library(book, works, db=db)
     author_rows = [
         service.upset_author_from_openlibrary(author, db=db)
         for author in authors
     ]
-
     service.link_book_to_authors(book_row, author_rows, db=db)
+
+    # Save the API responses from Openlibrary.
+    service.upsert_openlibrary_entities(
+        entities=[book] + authors + works,  # type: ignore
+        db=db,
+    )
 
 
 @cli.command(name="list")

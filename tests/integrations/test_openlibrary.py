@@ -81,30 +81,65 @@ def test_format_key_list(
     assert result == expected_result
 
 
-def test_book__from_data():
+def test_openlibrary_book__from_data():
     data = openlibrary_responses.BOOK_RESPONSE.copy()
-    book = openlibrary.Book.from_data(data)
+    book = openlibrary.OpenLibraryBook.from_data(data)
+
+    assert book.title == data["title"]
+    assert book.key == "OL7353617M"
     assert book.type_key == "edition"
-    assert book.number_of_pages == data["number_of_pages"]
 
 
-def test_link__from_data():
+def test_openlibrary_work__from_data():
+    data = openlibrary_responses.WORK_RESPONSE.copy()
+    work = openlibrary.OpenLibraryWork.from_data(data)
+
+    assert work.title == data["title"]
+    assert work.key == "OL45804W"
+    assert work.type_key == "work"
+
+
+@pytest.mark.parametrize(
+    "description, expected_description",
+    (
+        ("I am a work's description!", "I am a work's description!"),
+        (
+            {"type": "/type/text", "value": "I am a work's description!"},
+            "I am a work's description!",
+        ),
+    ),
+)
+def test_openlibrary_work__from_data__description(
+    description, expected_description
+):
+    data = openlibrary_responses.WORK_RESPONSE.copy()
+    data["description"] = description
+
+    work = openlibrary.OpenLibraryWork.from_data(data)
+
+    assert work.description == expected_description
+
+
+def test_openlibrary_link__from_data():
     data = {
         "url": "https://exmaple.com/",
         "title": "Example",
         "type": {"key": "/type/link"},
     }
-    link = openlibrary.Link.from_data(data)
+    link = openlibrary.OpenLibraryLink.from_data(data)
+
     assert link.url == data["url"]
     assert link.title == data["title"]
     assert link.type_key == "link"
 
 
-def test_author__from_data():
+def test_openlibrary_author__from_data():
     data = openlibrary_responses.AUTHOR_RESPONSE.copy()
-    author = openlibrary.Author.from_data(data)
-    assert author.type_key == "author"
+    author = openlibrary.OpenLibraryAuthor.from_data(data)
+
     assert author.name == data["name"]
+    assert author.key == "OL34184A"
+    assert author.type_key == "author"
 
 
 @responses.activate
