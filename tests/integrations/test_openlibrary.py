@@ -189,3 +189,22 @@ def test_open_library_client__get_author():
     author = client.get_author(key="OL34184A")
 
     assert author.name == response_data["name"]
+
+
+@responses.activate
+def test_open_library_client__get_work():
+    response_data = openlibrary_responses.WORK_RESPONSE.copy()
+
+    url = "https://openlibrary.org/works/OL45804W.json"
+
+    response = responses.Response(
+        method="GET",
+        url=url,
+        json=response_data,
+    )
+    responses.add(response)
+
+    client = openlibrary.OpenLibraryClient()
+    work = client.get_work(key="OL45804W")
+
+    assert work.title == response_data["title"]
