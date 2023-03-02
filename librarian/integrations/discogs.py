@@ -148,9 +148,10 @@ class DiscogsClient(HttpClient):
     ):
         super().__init__(session=session)
 
-        self.session.auth = DiscogsAuth(
-            token=Settings.DISCOGS_PERSONAL_ACCESS_TOKEN,
-        )
+        if Settings.DISCOGS_PERSONAL_ACCESS_TOKEN is not None:
+            self.session.auth = DiscogsAuth(
+                token=Settings.DISCOGS_PERSONAL_ACCESS_TOKEN,
+            )
 
         if base_url is None:
             base_url = "https://api.discogs.com"
