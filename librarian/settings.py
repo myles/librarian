@@ -1,4 +1,9 @@
+from os import environ
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Settings:
@@ -13,4 +18,12 @@ class Settings:
 
     # Books Collection
     BOOK_DB_PATH = DBS_PATH / "books.db"
-    BOOKS_DATA_PATH = DATA_PATH / "books.json"
+
+    # Vinyl Collection
+    VINYL_DB_PATH = DBS_PATH / "vinyl.db"
+
+    # Integrations
+    DISCOGS_PERSONAL_ACCESS_TOKEN = environ.get(
+        "LIBRARIAN_INTEGRATIONS_DISCOGS_PERSONAL_ACCESS_TOKEN",
+        None,
+    )
