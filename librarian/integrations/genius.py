@@ -14,7 +14,6 @@ TextFormatLiterals = Literal["dom", "plain", "html"]
 
 @dataclass
 class GeniusSearchHit:
-
     id: int
     full_title: str
     type: str
@@ -156,9 +155,6 @@ class GeniusClient(HttpClient):
         )
         response.raise_for_status()
         data = response.json()
-        hits = data["response"]['hits']
+        hits = data["response"]["hits"]
 
-        return [
-            GeniusSearchHit.from_data(hit)
-            for hit in hits
-        ]
+        return [GeniusSearchHit.from_data(hit) for hit in hits]

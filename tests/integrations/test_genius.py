@@ -53,4 +53,4 @@ def test_genius_client__get_song(text_format, expected_text_format_parma):
     client = genius.GeniusClient()
     song = client.get_song(song_id, text_format=text_format)
 
-    assert song["response"]["song"]["id"] == song_id
+    assert song.id == song_id

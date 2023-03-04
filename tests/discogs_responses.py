@@ -40,6 +40,23 @@ DISCOGS_RELEASE_IMAGE_PRIMARY = {
     "width": 600,
 }
 
+DISCOGS_RELEASE_TRACK = {
+            "duration": "3:32",
+            "position": "A",
+            "title": "Never Gonna Give You Up",
+            "type_": "track",
+        }
+
+DISCOGS_RELEASE_TRACK_ARTIST = {
+    "anv": "Me Co",
+    "id": 547352,
+    "join": "",
+    "name": "Me Company",
+    "resource_url": "https://api.discogs.com/artists/547352",
+    "role": "Design",
+    "tracks": "",
+}
+
 DISCOGS_RELEASE = {
     "title": "Never Gonna Give You Up",
     "id": 249504,
@@ -181,12 +198,7 @@ DISCOGS_RELEASE = {
     "status": "Accepted",
     "styles": ["Synth-pop"],
     "tracklist": [
-        {
-            "duration": "3:32",
-            "position": "A",
-            "title": "Never Gonna Give You Up",
-            "type_": "track",
-        },
+        DISCOGS_RELEASE_TRACK,
         {
             "duration": "3:30",
             "position": "B",
@@ -213,6 +225,13 @@ DISCOGS_RELEASE = {
     ],
     "year": 1987,
 }
+
+DISCOGS_ARTIST_MEMBER = {
+            "active": True,
+            "id": 270222,
+            "name": "Chad Kroeger",
+            "resource_url": "https://api.discogs.com/artists/270222",
+        }
 
 DISCOGS_ARTIST = {
     "namevariations": ["Nickleback"],
@@ -277,12 +296,7 @@ DISCOGS_ARTIST = {
         },
     ],
     "members": [
-        {
-            "active": True,
-            "id": 270222,
-            "name": "Chad Kroeger",
-            "resource_url": "https://api.discogs.com/artists/270222",
-        },
+        DISCOGS_ARTIST_MEMBER,
         {
             "active": True,
             "id": 685755,

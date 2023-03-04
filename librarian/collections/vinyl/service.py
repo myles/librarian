@@ -121,11 +121,11 @@ def get_release_from_discogs(
 
 
 def transform_discogs_artist(
-    artist: Union[discogs.DiscogsBasicArtist, discogs.DiscogsArtist],
+    artist: Union[discogs.DiscogsArtistMember, discogs.DiscogsArtist],
     existing_artist_id: Optional[int],
 ) -> Dict[str, Any]:
     """
-    Transform a DiscogsArtist or DiscogsBasicArtist dataclass to something
+    Transform a DiscogsArtist or DiscogsArtistMember dataclass to something
     that can be safely inserted to the vinyl table on the database.
     """
     record: Dict[str, Any] = {
@@ -134,14 +134,14 @@ def transform_discogs_artist(
         "updated_at": datetime.datetime.utcnow(),
     }
 
-    if isinstance(artist, discogs.DiscogsBasicArtist) is True:
+    if isinstance(artist, discogs.DiscogsArtistMember) is True:
         record["name"] = artist.name
 
     return record
 
 
 def upsert_artist_from_discogs_artist(
-    artist: Union[discogs.DiscogsBasicArtist, discogs.DiscogsArtist],
+    artist: Union[discogs.DiscogsArtistMember, discogs.DiscogsArtist],
     db: Database,
 ) -> Dict[str, Any]:
     """
@@ -173,7 +173,7 @@ def upsert_artist_from_discogs_artist(
 
 
 def upsert_discogs_artist(
-    artist: Union[discogs.DiscogsBasicArtist, discogs.DiscogsArtist],
+    artist: Union[discogs.DiscogsArtistMember, discogs.DiscogsArtist],
     db: Database,
 ) -> Dict[str, Any]:
     """

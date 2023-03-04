@@ -4,7 +4,6 @@ import click
 from sqlite_utils import Database
 
 from ...integrations.discogs import DiscogsClient
-from ...integrations.genius import GeniusClient
 from ...settings import Settings
 from . import service
 
@@ -75,15 +74,3 @@ def update_artists():
     db["bands_members"].upsert_all(
         records, pk=["artist_band_id", "artist_member_id"]
     )
-
-
-@cli.command
-@click.option(
-    "--query",
-    prompt="Genius search query",
-    prompt_required=True,
-)
-def get_song(query: str):
-    client = GeniusClient()
-    for result in client.search(query):
-        click.echo(result)

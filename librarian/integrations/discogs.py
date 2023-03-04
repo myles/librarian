@@ -24,6 +24,17 @@ DiscogsCurrencyLiterals = Literal[
 ]
 
 
+def transform_duration(value: str) -> Optional[int]:
+    """
+    Format a Discogs duration type.
+    """
+    if not value:
+        return None
+
+    minutes, seconds = value.split(":")
+    return (int(minutes) * 60) + int(seconds)
+
+
 @dataclass
 class DiscogsImage:
     type: Literal["primary", "secondary"]
@@ -44,10 +55,17 @@ class DiscogsImage:
 
 
 @dataclass
-class DiscogsBasicArtist:
+class DiscogsArtistBase:
+    """
+    Base dataclass for all the Discogs Artist response and attribute.
+    """
     id: int
-    name: str
 
+
+@dataclass
+class DiscogsArtistMember(DiscogsArtistBase):
+
+    name: str
     is_active: Optional[bool] = None
 
     @classmethod
@@ -65,45 +83,11 @@ class DiscogsBasicArtist:
 
 
 @dataclass
-class DiscogsRelease:
-    id: int
-    title: str
-    year: int
-    artists: List[DiscogsBasicArtist] = field(default_factory=list)
-    styles: List[str] = field(default_factory=list)
-
-    data: Dict[str, Any] = field(default_factory=dict, repr=False)
-
-    @classmethod
-    def from_data(cls, data: Dict[str, Any]):
-        defaults = deepcopy(data)
-
-        safe_keys = (
-            "id",
-            "title",
-            "year",
-            "artists",
-            "styles",
-        )
-        to_remove = [k for k in defaults.keys() if k not in safe_keys]
-        for key in to_remove:
-            del defaults[key]
-
-        defaults["artists"] = [
-            DiscogsBasicArtist.from_data(artist)
-            for artist in defaults.pop("artists", [])
-        ]
-
-        return cls(**defaults, data=data)
-
-
-@dataclass
-class DiscogsArtist:
-    id: int
+class DiscogsArtist(DiscogsArtistBase):
 
     name_variations: List[str] = field(default_factory=list)
     profile: str = ""
-    members: List[DiscogsBasicArtist] = field(default_factory=list)
+    members: List[DiscogsArtistMember] = field(default_factory=list)
 
     data: Dict[str, Any] = field(default_factory=dict, repr=False)
 
@@ -124,8 +108,105 @@ class DiscogsArtist:
         defaults["name_variations"] = defaults.pop("namevariations", None)
 
         defaults["members"] = [
-            DiscogsBasicArtist.from_data(member)
+            DiscogsArtistMember.from_data(member)
             for member in defaults.pop("members", [])
+        ]
+
+        return cls(**defaults, data=data)
+
+
+@dataclass
+class DiscogsReleaseArtist(DiscogsArtistBase):
+    name: str
+
+    @classmethod
+    def from_data(cls, data: Dict[str, Any]):
+        defaults = deepcopy(data)
+
+        safe_keys = ("id", "name")
+        to_remove = [k for k in defaults.keys() if k not in safe_keys]
+        for key in to_remove:
+            del defaults[key]
+
+        return cls(**defaults)
+
+
+@dataclass
+class DiscogsReleaseTrackArtist(DiscogsArtistBase):
+
+    name: str
+    role: Optional[str] = None
+
+    @classmethod
+    def from_data(cls, data: Dict[str, Any]):
+        defaults = deepcopy(data)
+
+        safe_keys = ("id", "name", "role")
+        to_remove = [k for k in defaults.keys() if k not in safe_keys]
+        for key in to_remove:
+            del defaults[key]
+
+        return cls(**defaults)
+
+
+@dataclass
+class DiscogsReleaseTrack:
+
+    title: str
+    duration: int
+    position: Optional[str] = None
+
+    artists: List[DiscogsReleaseTrackArtist] = field(default_factory=list)
+
+    @classmethod
+    def from_data(cls, data: Dict[str, Any]):
+        defaults = deepcopy(data)
+
+        safe_keys = ("title", "duration", "position", "extraartists")
+        to_remove = [k for k in defaults.keys() if k not in safe_keys]
+        for key in to_remove:
+            del defaults[key]
+
+        if "duration" in defaults:
+            defaults["duration"] = transform_duration(defaults.pop("duration"))
+
+        artists = defaults.pop("extraartists", [])
+        defaults["artists"] = [
+            DiscogsReleaseTrackArtist.from_data(artist)
+            for artist in artists
+        ]
+
+        return cls(**defaults)
+
+
+@dataclass
+class DiscogsRelease:
+    id: int
+    title: str
+    year: int
+    artists: List[DiscogsReleaseArtist] = field(default_factory=list)
+    styles: List[str] = field(default_factory=list)
+
+    data: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+    @classmethod
+    def from_data(cls, data: Dict[str, Any]):
+        defaults = deepcopy(data)
+
+        safe_keys = (
+            "id",
+            "title",
+            "year",
+            "artists",
+            "styles",
+        )
+        to_remove = [k for k in defaults.keys() if k not in safe_keys]
+        for key in to_remove:
+            del defaults[key]
+
+        defaults["artists"] = [
+            DiscogsReleaseArtist.from_data(artist)
+            for artist in defaults.pop("artists", [])
         ]
 
         return cls(**defaults, data=data)

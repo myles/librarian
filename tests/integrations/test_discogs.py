@@ -6,6 +6,19 @@ from librarian.integrations import discogs
 from librarian.settings import Settings
 
 from .. import discogs_responses
+import pytest
+
+
+@pytest.mark.parametrize(
+    "value, expected_result",
+    (
+        ("1:00", 60),
+        ("1:30", 90),
+    )
+)
+def test_transform_duration(value, expected_result):
+    result = discogs.transform_duration(value)
+    assert result == expected_result
 
 
 def test_discogs_image__from_data():
@@ -18,12 +31,41 @@ def test_discogs_image__from_data():
     assert image.resource_url == data["resource_url"]
 
 
-def test_discogs_basic_artist__from_data():
-    data = deepcopy(discogs_responses.DISCOGS_RELEASE_ARTIST)
+def test_discogs_member_artist__from_data():
+    data = deepcopy(discogs_responses.DISCOGS_ARTIST_MEMBER)
 
-    artist = discogs.DiscogsBasicArtist.from_data(data)
+    artist = discogs.DiscogsArtistMember.from_data(data)
     assert artist.id == data["id"]
     assert artist.name == data["name"]
+    assert artist.is_active is data["active"]
+
+
+def test_discogs_artist__from_data():
+    data = deepcopy(discogs_responses.DISCOGS_ARTIST)
+
+    artist = discogs.DiscogsArtist.from_data(data)
+    assert artist.id == data["id"]
+    assert artist.name_variations == data["namevariations"]
+    assert artist.profile == data["profile"]
+    assert len(artist.members) == len(data["members"])
+
+
+def test_discogs_release_track_artist__from_data():
+    data = deepcopy(discogs_responses.DISCOGS_RELEASE_TRACK_ARTIST)
+
+    artist = discogs.DiscogsReleaseTrackArtist.from_data(data)
+    assert artist.id == data["id"]
+    assert artist.name == data["name"]
+    assert artist.role == data["role"]
+
+
+def test_discogs_release_track__from_data():
+    data = deepcopy(discogs_responses.DISCOGS_RELEASE_TRACK)
+
+    track = discogs.DiscogsReleaseTrack.from_data(data)
+    assert track.title == data["title"]
+    assert track.duration == discogs.transform_duration(data["duration"])
+    assert track.position == data["position"]
 
 
 def test_discogs_release__from_data():
@@ -34,15 +76,6 @@ def test_discogs_release__from_data():
     assert release.title == data["title"]
     assert release.year == data["year"]
     assert release.artists[0].id == data["artists"][0]["id"]
-
-
-def test_discogs_artist__from_data():
-    data = deepcopy(discogs_responses.DISCOGS_ARTIST)
-
-    artist = discogs.DiscogsArtist.from_data(data)
-    assert artist.id == data["id"]
-    assert artist.name_variations == data["namevariations"]
-    assert artist.profile == data["profile"]
 
 
 @responses.activate
