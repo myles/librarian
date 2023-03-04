@@ -1,5 +1,3 @@
-from typing import Optional
-
 import click
 from pandas import DataFrame
 from sqlite_utils.db import Database

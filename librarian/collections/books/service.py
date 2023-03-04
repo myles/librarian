@@ -85,8 +85,10 @@ def build_database(db: Database):
             group_concat(authors.name, ', ') as authors
         from
             authors
-            left outer join books_authors on books_authors.author_id = authors.id
-            left outer join books on books.id = books_authors.book_id
+            left outer join books_authors
+                on books_authors.author_id = authors.id
+            left outer join books
+                on books.id = books_authors.book_id
         group by
             books.title
         order by
