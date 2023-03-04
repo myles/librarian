@@ -18,6 +18,8 @@ def test_build_database(mock_db):
 
     assert mock_db["openlibrary_entities"].exists() is True
 
+    assert mock_db["list_books_and_authors"].exists() is True
+
 
 @pytest.mark.parametrize(
     "book_covers, expected_result",
@@ -107,3 +109,10 @@ def test_link_book_to_authors(mock_book, mock_work, mock_author, mock_db):
 
     service.link_book_to_authors(book_row, [author_row], mock_db)
     assert mock_db["books_authors"].count == 1
+
+
+def test_list_books(mock_db):
+    service.build_database(mock_db)
+
+    books = service.list_books(mock_db)
+    assert len(list(books)) == 0

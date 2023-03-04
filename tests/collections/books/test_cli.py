@@ -1,3 +1,4 @@
+import pytest
 import responses
 
 from librarian.collections.books import cli
@@ -38,6 +39,17 @@ def test_add_book(mocker, cli_runner, mock_db):
     assert mock_db["authors"].exists() is False
 
     cli_runner.invoke(cli.add_book, "--isbn=0140328726")
+    cli_runner.invoke(cli.add_book, "--isbn=0140328726")
 
     assert mock_db["books"].count == 1
     assert mock_db["authors"].count == 1
+
+
+@pytest.mark.parametrize("output_format", ("csv", "json", "markdown"))
+def test_list_books(output_format, mocker, cli_runner, mock_db):
+    mocker.patch(
+        "librarian.collections.books.cli.Database",
+        return_value=mock_db,
+    )
+
+    cli_runner.invoke(cli.list_books, f"--format {output_format}")
