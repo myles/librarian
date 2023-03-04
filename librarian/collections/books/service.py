@@ -75,6 +75,28 @@ def build_database(db: Database):
             ),
         )
 
+    db.create_view(
+        name="list_books_and_authors",
+        sql="""
+        select
+            books.id,
+            books.title,
+            iif(books.isbn_13, books.isbn_13, books.isbn_10) as isbn,
+            group_concat(authors.name, ', ') as authors
+        from
+            authors
+            left outer join books_authors
+                on books_authors.author_id = authors.id
+            left outer join books
+                on books.id = books_authors.book_id
+        group by
+            books.title
+        order by
+            books.title
+        """,
+        replace=True,
+    )
+
 
 def get_openlibrary_book_cover_url(
     book: openlibrary.OpenLibraryBook,
@@ -258,7 +280,5 @@ def list_books(db: Database) -> Generator[Dict[str, Any], None, None]:
     """
     Returns a list of books in the SQLite database.
     """
-    table = db.table("books")
-    return table.rows_where(
-        select="id, title, iif(isbn_13, isbn_13, isbn_10) as isbn"
-    )
+    table = db.table("list_books_and_authors")
+    return table.rows_where(select="id, title, isbn, authors")
