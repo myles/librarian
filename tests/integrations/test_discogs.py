@@ -1,12 +1,12 @@
 from copy import deepcopy
 
+import pytest
 import responses
 
 from librarian.integrations import discogs
 from librarian.settings import Settings
 
 from .. import discogs_responses
-import pytest
 
 
 @pytest.mark.parametrize(
@@ -14,7 +14,7 @@ import pytest
     (
         ("1:00", 60),
         ("1:30", 90),
-    )
+    ),
 )
 def test_transform_duration(value, expected_result):
     result = discogs.transform_duration(value)

@@ -1,5 +1,3 @@
-from typing import List, Tuple
-
 import click
 from sqlite_utils import Database
 
@@ -51,7 +49,7 @@ def update_artists():
 
     artist_row = service.list_artists(db)
 
-    artists_band_members: List[Tuple[int, int, bool]] = []
+    artists_band_members = []
     for artist_row in artist_row:
         artist = client.get_artist(artist_row["discogs_artist_id"])
         service.upsert_discogs_artist(artist, db)

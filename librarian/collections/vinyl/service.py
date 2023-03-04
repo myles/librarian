@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional
 
 from sqlite_utils.db import Database, Table
 
@@ -121,7 +121,7 @@ def get_release_from_discogs(
 
 
 def transform_discogs_artist(
-    artist: Union[discogs.DiscogsArtistMember, discogs.DiscogsArtist],
+    artist: discogs.DiscogsArtistBase,
     existing_artist_id: Optional[int],
 ) -> Dict[str, Any]:
     """
@@ -134,14 +134,14 @@ def transform_discogs_artist(
         "updated_at": datetime.datetime.utcnow(),
     }
 
-    if isinstance(artist, discogs.DiscogsArtistMember) is True:
+    if hasattr(artist, "name"):
         record["name"] = artist.name
 
     return record
 
 
 def upsert_artist_from_discogs_artist(
-    artist: Union[discogs.DiscogsArtistMember, discogs.DiscogsArtist],
+    artist: discogs.DiscogsArtistBase,
     db: Database,
 ) -> Dict[str, Any]:
     """
@@ -169,11 +169,11 @@ def upsert_artist_from_discogs_artist(
     else:
         table = table.upsert(record, pk="id")
 
-    return table.get(table.last_pk)
+    return table.get(table.last_pk)  # type: ignore
 
 
 def upsert_discogs_artist(
-    artist: Union[discogs.DiscogsArtistMember, discogs.DiscogsArtist],
+    artist: discogs.DiscogsArtist,
     db: Database,
 ) -> Dict[str, Any]:
     """
@@ -188,7 +188,7 @@ def upsert_discogs_artist(
         },
         pk="id",
     )
-    return table.get(table.last_pk)
+    return table.get(table.last_pk)  # type: ignore
 
 
 def transform_discogs_release_to_vinyl_record(
@@ -226,7 +226,7 @@ def upsert_discogs_release(
         },
         pk="id",
     )
-    return table.get(table.last_pk)
+    return table.get(table.last_pk)  # type: ignore
 
 
 def upsert_vinyl_from_discogs_release(
@@ -262,7 +262,7 @@ def upsert_vinyl_from_discogs_release(
     else:
         table = table.upsert(record, pk="id")
 
-    row = table.get(table.last_pk)
+    row = table.get(table.last_pk)  # type: ignore
 
     vinyl_records_artists_table.upsert_all(
         records=[

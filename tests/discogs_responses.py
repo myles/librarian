@@ -41,11 +41,11 @@ DISCOGS_RELEASE_IMAGE_PRIMARY = {
 }
 
 DISCOGS_RELEASE_TRACK = {
-            "duration": "3:32",
-            "position": "A",
-            "title": "Never Gonna Give You Up",
-            "type_": "track",
-        }
+    "duration": "3:32",
+    "position": "A",
+    "title": "Never Gonna Give You Up",
+    "type_": "track",
+}
 
 DISCOGS_RELEASE_TRACK_ARTIST = {
     "anv": "Me Co",
@@ -227,11 +227,11 @@ DISCOGS_RELEASE = {
 }
 
 DISCOGS_ARTIST_MEMBER = {
-            "active": True,
-            "id": 270222,
-            "name": "Chad Kroeger",
-            "resource_url": "https://api.discogs.com/artists/270222",
-        }
+    "active": True,
+    "id": 270222,
+    "name": "Chad Kroeger",
+    "resource_url": "https://api.discogs.com/artists/270222",
+}
 
 DISCOGS_ARTIST = {
     "namevariations": ["Nickleback"],

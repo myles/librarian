@@ -59,12 +59,12 @@ class DiscogsArtistBase:
     """
     Base dataclass for all the Discogs Artist response and attribute.
     """
+
     id: int
 
 
 @dataclass
 class DiscogsArtistMember(DiscogsArtistBase):
-
     name: str
     is_active: Optional[bool] = None
 
@@ -84,7 +84,6 @@ class DiscogsArtistMember(DiscogsArtistBase):
 
 @dataclass
 class DiscogsArtist(DiscogsArtistBase):
-
     name_variations: List[str] = field(default_factory=list)
     profile: str = ""
     members: List[DiscogsArtistMember] = field(default_factory=list)
@@ -133,7 +132,6 @@ class DiscogsReleaseArtist(DiscogsArtistBase):
 
 @dataclass
 class DiscogsReleaseTrackArtist(DiscogsArtistBase):
-
     name: str
     role: Optional[str] = None
 
@@ -151,7 +149,6 @@ class DiscogsReleaseTrackArtist(DiscogsArtistBase):
 
 @dataclass
 class DiscogsReleaseTrack:
-
     title: str
     duration: int
     position: Optional[str] = None
@@ -172,8 +169,7 @@ class DiscogsReleaseTrack:
 
         artists = defaults.pop("extraartists", [])
         defaults["artists"] = [
-            DiscogsReleaseTrackArtist.from_data(artist)
-            for artist in artists
+            DiscogsReleaseTrackArtist.from_data(artist) for artist in artists
         ]
 
         return cls(**defaults)
