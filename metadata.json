@@ -22,6 +22,32 @@
           "hidden": true
         }
       }
+    },
+    "vinyl": {
+      "title": "Vinyl Records",
+      "tables": {
+        "artists": {
+          "sort": "name"
+        },
+        "vinyl": {
+          "sort": "title"
+        },
+        "bands_members": {
+          "hidden": true
+        },
+        "discogs_artists": {
+          "hidden": true
+        },
+        "discogs_releases": {
+          "hidden": true
+        },
+        "styles": {
+          "hidden": true
+        },
+        "vinyl_records_artists": {
+          "hidden": true
+        }
+      }
     }
   }
 }

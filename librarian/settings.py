@@ -27,3 +27,7 @@ class Settings:
         "LIBRARIAN_INTEGRATIONS_DISCOGS_PERSONAL_ACCESS_TOKEN",
         None,
     )
+    GENIUS_CLIENT_ACCESS_TOKEN = environ.get(
+        "LIBRARIAN_INTEGRATIONS_GENIUS_CLIENT_ACCESS_TOKEN",
+        None,
+    )

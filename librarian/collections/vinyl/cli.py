@@ -1,6 +1,12 @@
+from typing import List, Tuple
+
 import click
+from sqlite_utils import Database
 
 from ...integrations.discogs import DiscogsClient
+from ...integrations.genius import GeniusClient
+from ...settings import Settings
+from . import service
 
 
 @click.group()
@@ -16,12 +22,68 @@ def cli():
 )
 def add_vinyl(release_id: int):
     """Add a vinyl record to the library's collection."""
-    client = DiscogsClient()
-    release = client.get_release(release_id=release_id)
-    artists = [
-        client.get_artist(artist_id=artist.id) for artist in release.artists
-    ]
+    db = Database(Settings.VINYL_DB_PATH)
+    service.build_database(db)
 
-    click.echo(release)
-    for artist in artists:
-        click.echo(artist)
+    client = DiscogsClient()
+
+    release = service.get_release_from_discogs(release_id, client=client)
+    service.upsert_discogs_release(release, db)
+
+    artist_rows = []
+    for artist in release.artists:
+        artist_row = service.upsert_artist_from_discogs_artist(
+            artist=artist, db=db
+        )
+        artist_rows.append(artist_row)
+
+    service.upsert_vinyl_from_discogs_release(release, artist_rows, db)
+
+
+@cli.command()
+def update_artists():
+    """
+    Update all the artists in the DB.
+    """
+    db = Database(Settings.VINYL_DB_PATH)
+    service.build_database(db)
+
+    client = DiscogsClient()
+
+    artist_row = service.list_artists(db)
+
+    artists_band_members: List[Tuple[int, int, bool]] = []
+    for artist_row in artist_row:
+        artist = client.get_artist(artist_row["discogs_artist_id"])
+        service.upsert_discogs_artist(artist, db)
+        artist_row = service.upsert_artist_from_discogs_artist(artist, db)
+
+        for member in artist.members:
+            member_row = service.upsert_artist_from_discogs_artist(member, db)
+            artists_band_members.append(
+                (artist_row["id"], member_row["id"], member.is_active)
+            )
+
+    records = [
+        {
+            "artist_band_id": artist_band_id,
+            "artist_member_id": artist_member_id,
+            "is_active": is_active,
+        }
+        for artist_band_id, artist_member_id, is_active in artists_band_members
+    ]
+    db["bands_members"].upsert_all(
+        records, pk=["artist_band_id", "artist_member_id"]
+    )
+
+
+@cli.command
+@click.option(
+    "--query",
+    prompt="Genius search query",
+    prompt_required=True,
+)
+def get_song(query: str):
+    client = GeniusClient()
+    for result in client.search(query):
+        click.echo(result)

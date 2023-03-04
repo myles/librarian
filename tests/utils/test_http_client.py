@@ -8,7 +8,7 @@ from librarian.utils import http_client
 
 @responses.activate
 @pytest.mark.parametrize("method", ("GET", "POST", "PATCH", "DELETE", "PUT"))
-def test_http_client__request(method: http_client.MethodType):
+def test_http_client__request(method: http_client.MethodLiterals):
     url = "https://example.com/"
 
     responses.add(responses.Response(method=str(method), url=url))

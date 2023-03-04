@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+
 DISCOGS_RELEASE_ARTIST = {
     "anv": "",
     "id": 72872,

@@ -8,7 +8,7 @@ from requests.auth import AuthBase
 from ..settings import Settings
 from ..utils.http_client import HttpClient
 
-DiscogsCurrencyTypes = Literal[
+DiscogsCurrencyLiterals = Literal[
     "USD",
     "GBP",
     "EUR",
@@ -161,7 +161,7 @@ class DiscogsClient(HttpClient):
     def get_release(
         self,
         release_id: int,
-        currency: Optional[DiscogsCurrencyTypes] = None,
+        currency: Optional[DiscogsCurrencyLiterals] = None,
         **kwargs,
     ) -> DiscogsRelease:
         """
