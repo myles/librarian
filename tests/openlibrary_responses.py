@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+
 AUTHOR_RESPONSE = {
     "remote_ids": {
         "isni": "0000000121468188",

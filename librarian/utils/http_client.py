@@ -3,8 +3,7 @@ from typing import Dict, Literal, Optional, Tuple
 
 from requests import PreparedRequest, Request, Response, Session
 
-RequestReturn = Tuple[PreparedRequest, Response]
-MethodType = Literal["GET", "POST", "PATCH", "DELETE", "PUT"]
+MethodLiterals = Literal["GET", "POST", "PATCH", "DELETE", "PUT"]
 
 
 class HttpClient:
@@ -22,13 +21,13 @@ class HttpClient:
 
     def request(
         self,
-        method: MethodType,
+        method: MethodLiterals,
         url: str,
         headers: Optional[Dict[str, str]] = None,
         params: Optional[Dict[str, str]] = None,
         stream: bool = False,
         **kwargs,
-    ) -> RequestReturn:
+    ) -> Tuple[PreparedRequest, Response]:
         request = Request(
             method=method,
             url=url,
