@@ -216,7 +216,7 @@ class DiscogsRelease:
         identifiers = defaults.pop("identifiers")
 
         # Extract the barcode identifier.
-        barcode_identifier = next(
+        barcode_identifier: Dict[str, str] = next(
             filter(lambda x: x["type"] == "Barcode", identifiers), {}
         )
         defaults["barcode"] = barcode_identifier.get("value") or None
@@ -324,7 +324,7 @@ class DiscogsClient(HttpClient):
         """
         Search Discogs.
         """
-        params: Optional[Dict[str, Any]] = kwargs.pop("params", {})
+        params: Dict[str, Any] = kwargs.pop("params", {})
 
         if query is not None:
             params["query"] = query
@@ -349,7 +349,7 @@ class DiscogsClient(HttpClient):
 
             # We are going to use the parameters from the pagination next URL,
             # so we need clear the params and update the next_url variables.
-            params = None
+            params = {}
             next_url = data["pagination"]["urls"].get("next")
 
             for result in data["results"]:
