@@ -1,6 +1,7 @@
+import pytest
+
 from librarian.collections.vinyl import service
 from librarian.integrations.discogs import DiscogsRelease
-import pytest
 
 
 def test_build_database(mock_db):
@@ -23,7 +24,7 @@ def test_build_database(mock_db):
         ("6 5660-50401-3 4", "566050401", True),
         ("7 69791 98182 9", "6979198182", True),
         (None, "123456789", False),
-    )
+    ),
 )
 def test_does_discogs_release_match_isbn(
     release_barcode, isbn, expected_result
@@ -35,7 +36,5 @@ def test_does_discogs_release_match_isbn(
         barcode=release_barcode,
     )
 
-    result = service.does_discogs_release_match_isbn(
-        release=release, isbn=isbn
-    )
+    result = service.does_discogs_release_match_isbn(release=release, isbn=isbn)
     assert result == expected_result
