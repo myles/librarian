@@ -1,4 +1,6 @@
 import datetime
+import re
+from itertools import islice
 from typing import Any, Dict, Generator, List, Optional
 
 from sqlite_utils.db import Database, Table
@@ -46,6 +48,7 @@ def build_database(db: Database):
         vinyl_records_table.create(
             columns={
                 "id": int,
+                "isbn": str,
                 "title": str,
                 "year": int,
                 "discogs_release_id": int,
@@ -70,6 +73,7 @@ def build_database(db: Database):
             columns={
                 "id": int,
                 "name": str,
+                "profile": str,
                 "discogs_artist_id": int,
                 "created_at": datetime.datetime,
                 "updated_at": datetime.datetime,
@@ -108,6 +112,33 @@ def build_database(db: Database):
         )
 
 
+def query_releases_on_discogs_matching_isbn(
+    isbn: str, client: Optional[discogs.DiscogsClient] = None
+) -> List[discogs.DiscogsSearchResult]:
+    """
+    Query all the releases on Discogs matching an ISBN and return the top 10
+    matching results.
+    """
+    if client is None:
+        client = discogs.DiscogsClient()
+
+    return list(islice(client.search(type="release", barcode=isbn), 10))
+
+
+def does_discogs_release_match_isbn(
+    release: discogs.DiscogsRelease, isbn: str
+) -> bool:
+    """
+    Does the Discogs release's barcode match the given ISBN?
+    """
+    # If the release does not have a known barcode then return False.
+    if release.barcode is None:
+        return False
+
+    barcode = re.sub(r"[^.0-9]", "", release.barcode)
+    return isbn in barcode
+
+
 def get_release_from_discogs(
     release_id: int, client: Optional[discogs.DiscogsClient] = None
 ) -> discogs.DiscogsRelease:
@@ -136,6 +167,9 @@ def transform_discogs_artist(
 
     if hasattr(artist, "name"):
         record["name"] = artist.name
+
+    if hasattr(artist, "profile"):
+        record["profile"] = artist.profile
 
     return record
 
@@ -201,6 +235,7 @@ def transform_discogs_release_to_vinyl_record(
     """
     record = {
         "id": existing_vinyl_id,
+        "isbn": release.barcode,
         "title": release.title,
         "year": release.year,
         "discogs_release_id": release.id,

@@ -323,3 +323,37 @@ DISCOGS_ARTIST = {
         },
     ],
 }
+
+
+DISCOGS_SEARCH_RESULT_ONE = {
+    "style": ["Interview", "Grunge"],
+    "thumb": "",
+    "title": "Nirvana - Nevermind",
+    "country": "Australia",
+    "format": ["DVD", "PAL"],
+    "uri": "/Nirvana-Nevermind-Classic-Albums/release/2028757",
+    "community": {"want": 1, "have": 5},
+    "label": ["Eagle Vision", "Rajon Vision", "Classic Albums"],
+    "catno": "RV0296",
+    "year": "2005",
+    "genre": ["Non-Music", "Rock"],
+    "resource_url": "http://api.discogs.com/releases/2028757",
+    "type": "release",
+    "id": 2028757,
+}
+DISCOGS_SEARCH_RESULT_TWO = {
+    "style": ["Hard Rock", "Classic Rock"],
+    "thumb": "",
+    "format": ["UMD"],
+    "country": "Europe",
+    "barcode": ["5 034504 843646"],
+    "uri": "/Nirvana-Nevermind/release/3058947",
+    "community": {"want": 10, "have": 3},
+    "label": ["Eagle Vision"],
+    "catno": "ERUMD436",
+    "genre": ["Rock"],
+    "title": "Nirvana - Nevermind",
+    "resource_url": "http://api.discogs.com/releases/3058947",
+    "type": "release",
+    "id": 3058947,
+}

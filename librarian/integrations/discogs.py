@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, Generator, List, Literal, Optional
 
 from requests import Session
 from requests.auth import AuthBase
@@ -22,6 +22,8 @@ DiscogsCurrencyLiterals = Literal[
     "SEK",
     "ZAR",
 ]
+
+DiscogsTypeLiterals = Literal["release", "master", "artist", "label"]
 
 
 def transform_duration(value: str) -> Optional[int]:
@@ -87,6 +89,7 @@ class DiscogsArtist(DiscogsArtistBase):
     name_variations: List[str] = field(default_factory=list)
     profile: str = ""
     members: List[DiscogsArtistMember] = field(default_factory=list)
+    images: List[DiscogsImage] = field(default_factory=list)
 
     data: Dict[str, Any] = field(default_factory=dict, repr=False)
 
@@ -99,6 +102,7 @@ class DiscogsArtist(DiscogsArtistBase):
             "namevariations",
             "profile",
             "members",
+            "images",
         )
         to_remove = [k for k in defaults.keys() if k not in safe_keys]
         for key in to_remove:
@@ -183,6 +187,9 @@ class DiscogsRelease:
     artists: List[DiscogsReleaseArtist] = field(default_factory=list)
     styles: List[str] = field(default_factory=list)
 
+    # Identifiers
+    barcode: Optional[str] = None
+
     data: Dict[str, Any] = field(default_factory=dict, repr=False)
 
     @classmethod
@@ -195,6 +202,7 @@ class DiscogsRelease:
             "year",
             "artists",
             "styles",
+            "identifiers",
         )
         to_remove = [k for k in defaults.keys() if k not in safe_keys]
         for key in to_remove:
@@ -204,6 +212,38 @@ class DiscogsRelease:
             DiscogsReleaseArtist.from_data(artist)
             for artist in defaults.pop("artists", [])
         ]
+
+        identifiers = defaults.pop("identifiers")
+
+        # Extract the barcode identifier.
+        barcode_identifier = next(
+            filter(lambda x: x["type"] == "Barcode", identifiers), {}
+        )
+        defaults["barcode"] = barcode_identifier.get("value") or None
+
+        return cls(**defaults, data=data)
+
+
+@dataclass
+class DiscogsSearchResult:
+    id: int
+    type: DiscogsTypeLiterals
+    title: str = ""
+    url: Optional[str] = None
+
+    data: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+    @classmethod
+    def from_data(cls, data: Dict[str, Any]):
+        defaults = deepcopy(data)
+
+        safe_keys = ("id", "type", "title", "uri")
+        to_remove = [k for k in defaults.keys() if k not in safe_keys]
+        for key in to_remove:
+            del defaults[key]
+
+        if "uri" in defaults:
+            defaults["url"] = f"https://discogs.com{defaults.pop('uri')}"
 
         return cls(**defaults, data=data)
 
@@ -273,3 +313,44 @@ class DiscogsClient(HttpClient):
         data = response.json()
 
         return DiscogsArtist.from_data(data)
+
+    def search(
+        self,
+        query: Optional[str] = None,
+        type: Optional[DiscogsTypeLiterals] = None,
+        barcode: Optional[str] = None,
+        **kwargs,
+    ) -> Generator[DiscogsSearchResult, None, None]:
+        """
+        Search Discogs.
+        """
+        params: Optional[Dict[str, Any]] = kwargs.pop("params", {})
+
+        if query is not None:
+            params["query"] = query
+
+        if type is not None:
+            params["type"] = type
+
+        if barcode is not None:
+            params["barcode"] = barcode
+
+        next_url = f"{self.base_url}/database/search"
+
+        while next_url is not None:
+            _, response = self.request(
+                method="GET",
+                url=next_url,
+                params=params,
+                **kwargs,
+            )
+            response.raise_for_status()
+            data = response.json()
+
+            # We are going to use the parameters from the pagination next URL,
+            # so we need clear the params and update the next_url variables.
+            params = None
+            next_url = data["pagination"]["urls"].get("next")
+
+            for result in data["results"]:
+                yield DiscogsSearchResult.from_data(result)

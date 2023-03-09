@@ -1,3 +1,5 @@
+from typing import Optional
+
 import click
 from sqlite_utils import Database
 
@@ -13,18 +15,49 @@ def cli():
 
 @cli.command(name="add")
 @click.option(
-    "--release-id",
-    prompt="Discogs release ID",
-    prompt_required=True,
+    "--isbn",
+    help="ISBN of the vinyl record.",
+    default=None,
+    type=str,
 )
-def add_vinyl(release_id: int):
+@click.option(
+    "--discogs-release-id",
+    help="Discogs release ID of the vinyl record.",
+    default=None,
+    type=int,
+)
+def add_vinyl(
+    isbn: Optional[str] = None, discogs_release_id: Optional[int] = None
+):
     """Add a vinyl record to the library's collection."""
     db = Database(Settings.VINYL_DB_PATH)
     service.build_database(db)
 
     client = DiscogsClient()
 
-    release = service.get_release_from_discogs(release_id, client=client)
+    if isbn is not None:
+        search_results = service.query_releases_on_discogs_matching_isbn(
+            isbn=isbn, client=client
+        )
+
+        for result in search_results:
+            release = service.get_release_from_discogs(result.id, client=client)
+
+            if service.does_discogs_release_match_isbn(release, isbn) is True:
+                break
+        else:
+            raise click.ClickException(
+                f"We couldn't find a Discogs Release by the ISBN {isbn}."
+            )
+    elif discogs_release_id is not None:
+        release = service.get_release_from_discogs(
+            discogs_release_id, client=client
+        )
+    else:
+        raise click.ClickException(
+            "Please provided ether an ISBN or Discogs Release ID."
+        )
+
     service.upsert_discogs_release(release, db)
 
     artist_rows = []

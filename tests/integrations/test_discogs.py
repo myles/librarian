@@ -2,6 +2,7 @@ from copy import deepcopy
 
 import pytest
 import responses
+from responses.matchers import query_param_matcher
 
 from librarian.integrations import discogs
 from librarian.settings import Settings
@@ -68,14 +69,34 @@ def test_discogs_release_track__from_data():
     assert track.position == data["position"]
 
 
-def test_discogs_release__from_data():
+@pytest.mark.parametrize(
+    "identifiers, expected_barcode",
+    (
+        ([{"type": "Barcode", "value": "5012394144777"}], "5012394144777"),
+        ([{"type": "Barcode", "value": ""}], None),
+        ([], None),
+    ),
+)
+def test_discogs_release__from_data(identifiers, expected_barcode):
     data = deepcopy(discogs_responses.DISCOGS_RELEASE)
+    data["identifiers"] = identifiers
 
     release = discogs.DiscogsRelease.from_data(data)
     assert release.id == data["id"]
     assert release.title == data["title"]
     assert release.year == data["year"]
     assert release.artists[0].id == data["artists"][0]["id"]
+    assert release.barcode == expected_barcode
+
+
+def test_discogs_search_result__from_data():
+    data = deepcopy(discogs_responses.DISCOGS_SEARCH_RESULT_ONE)
+
+    search_result = discogs.DiscogsSearchResult.from_data(data)
+    assert search_result.id == data["id"]
+    assert search_result.type == data["type"]
+    assert search_result.title == data["title"]
+    assert search_result.url == f"https://discogs.com{data['uri']}"
 
 
 @responses.activate
@@ -142,3 +163,63 @@ def test_discogs_client__get_artist():
     atrist = client.get_artist(artist_id=artist_id)
 
     assert atrist.id == response_data["id"]
+
+
+@responses.activate
+def test_discogs_client__search():
+    result_one = deepcopy(discogs_responses.DISCOGS_SEARCH_RESULT_ONE)
+    result_two = deepcopy(discogs_responses.DISCOGS_SEARCH_RESULT_TWO)
+
+    first_response_url = "https://api.discogs.com/database/search?query=nirvana"
+    second_response_url = (
+        "https://api.discogs.com/database/search"
+        "?query=nirvana&per_page=1&page=2"
+    )
+
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=first_response_url,
+            json={
+                "pagination": {
+                    "per_page": 1,
+                    "pages": 2,
+                    "page": 1,
+                    "urls": {"next": second_response_url},
+                },
+                "results": [result_one],
+            },
+            match=[
+                query_param_matcher({"query": "nirvana"}, strict_match=True)
+            ],
+        )
+    )
+    responses.add(
+        responses.Response(
+            method="GET",
+            url=second_response_url,
+            json={
+                "pagination": {
+                    "per_page": 1,
+                    "pages": 2,
+                    "page": 2,
+                    "urls": {},
+                },
+                "results": [result_two],
+            },
+            match=[
+                query_param_matcher(
+                    {"query": "nirvana", "per_page": 1, "page": 2},
+                    strict_match=True,
+                )
+            ],
+        )
+    )
+
+    client = discogs.DiscogsClient()
+    results = list(client.search(query="nirvana"))
+
+    assert len(results) == 2
+    first_result, second_result = results
+    assert first_result.id == result_one["id"]
+    assert second_result.id == result_two["id"]
