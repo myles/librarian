@@ -1,7 +1,15 @@
+
 import pytest
 
 from librarian.collections.vinyl import service
-from librarian.integrations.discogs import DiscogsRelease
+from librarian.integrations.discogs import (
+    DiscogsArtist,
+    DiscogsArtistMember,
+    DiscogsRelease,
+    DiscogsReleaseArtist,
+)
+
+from ... import discogs_responses
 
 
 def test_build_database(mock_db):
@@ -38,3 +46,46 @@ def test_does_discogs_release_match_isbn(
 
     result = service.does_discogs_release_match_isbn(release=release, isbn=isbn)
     assert result == expected_result
+
+
+def test_transform_discogs_artist__discogs_artist():
+    artist = DiscogsArtist.from_data(discogs_responses.DISCOGS_ARTIST)
+
+    transformed_artist = service.transform_discogs_artist(
+        artist, existing_artist_id=123
+    )
+    assert len(transformed_artist.keys()) == 4
+    assert transformed_artist["id"] == 123
+    assert transformed_artist["discogs_artist_id"] == artist.id
+    assert "updated_at" in transformed_artist
+    assert transformed_artist["profile"] == artist.profile
+
+
+def test_transform_discogs_artist__discogs_release_member():
+    artist = DiscogsReleaseArtist.from_data(
+        discogs_responses.DISCOGS_RELEASE_ARTIST
+    )
+
+    transformed_artist = service.transform_discogs_artist(
+        artist, existing_artist_id=None
+    )
+    assert len(transformed_artist.keys()) == 4
+    assert transformed_artist["id"] is None
+    assert transformed_artist["discogs_artist_id"] == artist.id
+    assert "updated_at" in transformed_artist
+    assert transformed_artist["name"] == artist.name
+
+
+def test_transform_discogs_artist__discogs_artist_member():
+    artist = DiscogsArtistMember.from_data(
+        discogs_responses.DISCOGS_ARTIST_MEMBER
+    )
+
+    transformed_artist = service.transform_discogs_artist(
+        artist, existing_artist_id=None
+    )
+    assert len(transformed_artist.keys()) == 4
+    assert transformed_artist["id"] is None
+    assert transformed_artist["discogs_artist_id"] == artist.id
+    assert "updated_at" in transformed_artist
+    assert transformed_artist["name"] == artist.name
