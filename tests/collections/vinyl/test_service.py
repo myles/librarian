@@ -1,4 +1,3 @@
-
 import pytest
 
 from librarian.collections.vinyl import service
