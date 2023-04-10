@@ -185,6 +185,7 @@ class DiscogsRelease:
     title: str
     year: int
     artists: List[DiscogsReleaseArtist] = field(default_factory=list)
+    tracks: List[DiscogsReleaseTrack] = field(default_factory=list)
     styles: List[str] = field(default_factory=list)
 
     # Identifiers
@@ -203,6 +204,7 @@ class DiscogsRelease:
             "artists",
             "styles",
             "identifiers",
+            "tracklist",
         )
         to_remove = [k for k in defaults.keys() if k not in safe_keys]
         for key in to_remove:
@@ -211,6 +213,11 @@ class DiscogsRelease:
         defaults["artists"] = [
             DiscogsReleaseArtist.from_data(artist)
             for artist in defaults.pop("artists", [])
+        ]
+
+        defaults["tracks"] = [
+            DiscogsReleaseTrack.from_data(track)
+            for track in defaults.pop("tracklist", [])
         ]
 
         identifiers = defaults.pop("identifiers")

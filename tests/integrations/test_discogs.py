@@ -87,6 +87,7 @@ def test_discogs_release__from_data(identifiers, expected_barcode):
     assert release.year == data["year"]
     assert release.artists[0].id == data["artists"][0]["id"]
     assert release.barcode == expected_barcode
+    assert release.tracks[0].title == data["tracklist"][0]["title"]
 
 
 def test_discogs_search_result__from_data():

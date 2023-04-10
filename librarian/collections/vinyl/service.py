@@ -36,6 +36,7 @@ def build_database(db: Database):
         )
 
     vinyl_records_table: Table = db.table("vinyl_records")  # type: ignore
+    tracks_table: Table = db.table("tracks")  # type: ignore
     styles_table: Table = db.table("styles")  # type: ignore
 
     artists_table: Table = db.table("artists")  # type: ignore
@@ -60,6 +61,23 @@ def build_database(db: Database):
             defaults={"created_at": datetime.datetime.utcnow()},
         )
         vinyl_records_table.enable_fts(["title"], create_triggers=True)
+
+    if tracks_table.exists() is False:
+        tracks_table.create(
+            columns={
+                "id": int,
+                "vinyl_record_id": int,
+                "title": str,
+                "position": str,
+                "duration": int,
+                "created_at": datetime.datetime,
+                "updated_at": datetime.datetime,
+            },
+            pk="id",
+            foreign_keys=(("vinyl_record_id", "vinyl_records", "id"),),
+            defaults={"created_at": datetime.datetime.utcnow()},
+        )
+        tracks_table.enable_fts(["title"], create_triggers=True)
 
     if styles_table.exists() is False:
         styles_table.create(
@@ -137,6 +155,22 @@ def does_discogs_release_match_isbn(
 
     barcode = re.sub(r"[^.0-9]", "", release.barcode)
     return isbn in barcode
+
+
+def get_discogs_release_by_isbn(
+    isbn: str, client: Optional[discogs.DiscogsClient] = None
+) -> Optional[discogs.DiscogsRelease]:
+    """
+    Get a Discogs release by an ISBN.
+    """
+    search_results = query_releases_on_discogs_matching_isbn(
+        isbn=isbn, client=client
+    )
+
+    for result in search_results:
+        release = get_release_from_discogs(result.id, client=client)
+        if does_discogs_release_match_isbn(release, isbn) is True:
+            return release
 
 
 def get_release_from_discogs(
@@ -241,7 +275,26 @@ def transform_discogs_release_to_vinyl_record(
         "discogs_release_id": release.id,
         "updated_at": datetime.datetime.utcnow(),
     }
+    return record
 
+
+def transform_discogs_release_track(
+    track: discogs.DiscogsReleaseTrack,
+    existing_track_id: Optional[int],
+    vinyl_record_id: int,
+) -> Dict[str, Any]:
+    """
+    Transform a DiscogsReleaseTrack to something that can be safely
+    inserted to the vinyl table on the database.
+    """
+    record = {
+        "id": existing_track_id,
+        "vinyl_record_id": vinyl_record_id,
+        "title": track.title,
+        "position": track.position,
+        "duration": track.duration,
+        "updated_at": datetime.datetime.utcnow(),
+    }
     return record
 
 
@@ -272,13 +325,13 @@ def upsert_vinyl_from_discogs_release(
     """
     Upsert a vinyl into the SQLite database.
     """
-    table: Table = db.table("vinyl_records")  # type: ignore
+    vinyl_records_table: Table = db.table("vinyl_records")  # type: ignore
     vinyl_records_artists_table: Table = db.table(
         "vinyl_records_artists",
     )  # type: ignore
 
     existing_vinyl_record_ids = list(
-        table.pks_and_rows_where(
+        vinyl_records_table.pks_and_rows_where(
             where="discogs_release_id = :release_id",
             where_args={"release_id": release.id},
         )
@@ -293,9 +346,9 @@ def upsert_vinyl_from_discogs_release(
     )
 
     if record["id"] is None:
-        table = table.insert(record=record)
+        table = vinyl_records_table.insert(record=record)
     else:
-        table = table.upsert(record, pk="id")
+        table = vinyl_records_table.upsert(record, pk="id")
 
     row = table.get(table.last_pk)  # type: ignore
 
@@ -308,6 +361,52 @@ def upsert_vinyl_from_discogs_release(
     )
 
     return row
+
+
+def upsert_tracks_from_discogs_release(
+    release: discogs.DiscogsRelease,
+    vinyl_record_id: int,
+    db: Database,
+):
+    """
+    Upset tracks rows into the SQLite database.
+    """
+    tracks_table: Table = db.table("tracks")  # type: ignore
+
+    existing_track_rows = list(
+        tracks_table.rows_where(
+            where="vinyl_record_id = :vinyl_record_id",
+            where_args={"vinyl_record_id": vinyl_record_id},
+        )
+    )
+
+    insert_records = []
+    upsert_records = []
+
+    for track in release.tracks:
+        existing_track = next(
+            filter(
+                lambda row: row["position"] == track.position,
+                existing_track_rows,
+            ),
+            None,
+        )
+        transformed_track = transform_discogs_release_track(
+            track,
+            existing_track_id=existing_track["id"] if existing_track else None,
+            vinyl_record_id=vinyl_record_id,
+        )
+
+        if transformed_track["id"] is None:
+            insert_records.append(transformed_track)
+        else:
+            upsert_records.append(transformed_track)
+
+    if insert_records:
+        tracks_table.insert_all(records=insert_records)
+
+    if upsert_records:
+        tracks_table.upsert_all(records=upsert_records, pk="id")
 
 
 def list_artists(db: Database) -> Generator[Dict[str, Any], None, None]:

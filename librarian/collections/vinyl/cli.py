@@ -36,16 +36,8 @@ def add_vinyl(
     client = DiscogsClient()
 
     if isbn is not None:
-        search_results = service.query_releases_on_discogs_matching_isbn(
-            isbn=isbn, client=client
-        )
-
-        for result in search_results:
-            release = service.get_release_from_discogs(result.id, client=client)
-
-            if service.does_discogs_release_match_isbn(release, isbn) is True:
-                break
-        else:
+        release = service.get_discogs_release_by_isbn(isbn=isbn, client=client)
+        if release is None:
             raise click.ClickException(
                 f"We couldn't find a Discogs Release by the ISBN {isbn}."
             )
@@ -67,7 +59,10 @@ def add_vinyl(
         )
         artist_rows.append(artist_row)
 
-    service.upsert_vinyl_from_discogs_release(release, artist_rows, db)
+    vinyl_row = service.upsert_vinyl_from_discogs_release(
+        release, artist_rows, db
+    )
+    service.upsert_tracks_from_discogs_release(release, vinyl_row["id"], db)
 
 
 @cli.command()

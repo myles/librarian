@@ -13,6 +13,24 @@ TextFormatLiterals = Literal["dom", "plain", "html"]
 
 
 @dataclass
+class GeniusReferent:
+    id: int
+
+    data: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+    @classmethod
+    def from_data(cls, data: Dict[str, Any]):
+        defaults = deepcopy(data)
+
+        safe_keys = ("id",)
+        to_remove = [k for k in defaults.keys() if k not in safe_keys]
+        for key in to_remove:
+            del defaults[key]
+
+        return cls(**defaults, data=data)
+
+
+@dataclass
 class GeniusSearchHit:
     id: int
     full_title: str
@@ -109,6 +127,53 @@ class GeniusClient(HttpClient):
             base_url = "https://api.genius.com"
 
         self.base_url = base_url
+
+    def get_referents(
+        self,
+        created_by_id: int = None,
+        song_id: int = None,
+        web_page_id: int = None,
+        text_format: Optional[
+            Union[TextFormatLiterals, List[TextFormatLiterals]]
+        ] = "dom",
+        **kwargs,
+    ):
+        """
+        Returns a list of referents from Genius.
+        """
+        if song_id is not None and web_page_id is not None:
+            raise ValueError(
+                "You can only pass song_id or web_page_id, not both."
+            )
+
+        params: Dict[str, Any] = kwargs.pop("params", {})
+
+        if created_by_id is not None:
+            params["created_by_id"] = created_by_id
+
+        if song_id is not None:
+            params["song_id"] = song_id
+
+        if web_page_id is not None:
+            params["web_page_id"] = web_page_id
+
+        if text_format is not None:
+            if isinstance(text_format, str):
+                text_format = [text_format]
+
+            params["text_format"] = ",".join(text_format)
+
+        _, response = self.request(
+            method="GET",
+            url=f"{self.base_url}/referents",
+            params=params,
+            **kwargs,
+        )
+        response.raise_for_status()
+        data = response.json()
+        referents = data["response"]["referents"]
+
+        return [GeniusReferent.from_data(referent) for referent in referents]
 
     def get_song(
         self,
