@@ -1,4 +1,5 @@
 from copy import deepcopy
+from urllib.parse import urlencode
 
 import pytest
 import responses
@@ -124,22 +125,30 @@ def test_discogs_client(mocker):
 
 
 @responses.activate
-def test_discogs_client__get_release():
+@pytest.mark.parametrize("currency", (None, "USD", "CAD"))
+def test_discogs_client__get_release(currency):
     response_data = deepcopy(discogs_responses.DISCOGS_RELEASE)
     release_id = response_data["id"]
 
     url = f"https://api.discogs.com/releases/{release_id}"
+
+    match = []
+    if currency is not None:
+        match.append(
+            query_param_matcher({"curr_abbr": currency}, strict_match=True)
+        )
 
     responses.add(
         responses.Response(
             method="GET",
             url=url,
             json=response_data,
+            match=match,
         )
     )
 
     client = discogs.DiscogsClient()
-    release = client.get_release(release_id=release_id, currency="CAD")
+    release = client.get_release(release_id=release_id, currency=currency)
 
     assert release.id == response_data["id"]
     assert release.title == response_data["title"]
@@ -167,15 +176,35 @@ def test_discogs_client__get_artist():
 
 
 @responses.activate
-def test_discogs_client__search():
+@pytest.mark.parametrize(
+    "query, type, barcode, request_query",
+    (
+        (
+            "nirvana",
+            None,
+            None,
+            {"query": "nirvana"},
+        ),
+        (
+            "nirvana",
+            "release",
+            None,
+            {"query": "nirvana", "type": "release"},
+        ),
+        (
+            None,
+            None,
+            "i-am-a-barcode",
+            {"barcode": "i-am-a-barcode"},
+        ),
+    ),
+)
+def test_discogs_client__search(query, type, barcode, request_query):
     result_one = deepcopy(discogs_responses.DISCOGS_SEARCH_RESULT_ONE)
     result_two = deepcopy(discogs_responses.DISCOGS_SEARCH_RESULT_TWO)
 
-    first_response_url = "https://api.discogs.com/database/search?query=nirvana"
-    second_response_url = (
-        "https://api.discogs.com/database/search"
-        "?query=nirvana&per_page=1&page=2"
-    )
+    first_response_url = "https://api.discogs.com/database/search"
+    second_response_url = f"https://api.discogs.com/database/search?per_page=1&page=2&{urlencode(request_query)}"
 
     responses.add(
         responses.Response(
@@ -190,9 +219,7 @@ def test_discogs_client__search():
                 },
                 "results": [result_one],
             },
-            match=[
-                query_param_matcher({"query": "nirvana"}, strict_match=True)
-            ],
+            match=[query_param_matcher(request_query, strict_match=True)],
         )
     )
     responses.add(
@@ -210,7 +237,7 @@ def test_discogs_client__search():
             },
             match=[
                 query_param_matcher(
-                    {"query": "nirvana", "per_page": 1, "page": 2},
+                    {**request_query, "per_page": 1, "page": 2},
                     strict_match=True,
                 )
             ],
@@ -218,7 +245,7 @@ def test_discogs_client__search():
     )
 
     client = discogs.DiscogsClient()
-    results = list(client.search(query="nirvana"))
+    results = list(client.search(query=query, type=type, barcode=barcode))
 
     assert len(results) == 2
     first_result, second_result = results
