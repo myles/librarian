@@ -172,6 +172,8 @@ def get_discogs_release_by_isbn(
         if does_discogs_release_match_isbn(release, isbn) is True:
             return release
 
+    return None
+
 
 def get_release_from_discogs(
     release_id: int, client: Optional[discogs.DiscogsClient] = None

@@ -130,9 +130,9 @@ class GeniusClient(HttpClient):
 
     def get_referents(
         self,
-        created_by_id: int = None,
-        song_id: int = None,
-        web_page_id: int = None,
+        created_by_id: Optional[int] = None,
+        song_id: Optional[int] = None,
+        web_page_id: Optional[int] = None,
         text_format: Optional[
             Union[TextFormatLiterals, List[TextFormatLiterals]]
         ] = "dom",
