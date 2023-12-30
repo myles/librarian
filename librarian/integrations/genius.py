@@ -163,8 +163,7 @@ class GeniusClient(HttpClient):
 
             params["text_format"] = ",".join(text_format)
 
-        _, response = self.request(
-            method="GET",
+        _, response = self.get(
             url=f"{self.base_url}/referents",
             params=params,
             **kwargs,
@@ -194,8 +193,7 @@ class GeniusClient(HttpClient):
 
             params["text_format"] = ",".join(text_format)
 
-        _, response = self.request(
-            method="GET",
+        _, response = self.get(
             url=f"{self.base_url}/songs/{song_id}",
             params=params,
             **kwargs,
@@ -212,8 +210,7 @@ class GeniusClient(HttpClient):
         params: Dict[str, Any] = kwargs.pop("params", {})
         params["q"] = query
 
-        _, response = self.request(
-            method="GET",
+        _, response = self.get(
             url=f"{self.base_url}/search",
             params=params,
             **kwargs,

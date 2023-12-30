@@ -38,3 +38,88 @@ class HttpClient:
         prepare_request = self.session.prepare_request(request)
         response = self.session.send(prepare_request, stream=stream)
         return prepare_request, response
+
+    def get(
+        self,
+        url: str,
+        headers: Optional[Dict[str, str]] = None,
+        params: Optional[Dict[str, str]] = None,
+        stream: bool = False,
+        **kwargs,
+    ) -> Tuple[PreparedRequest, Response]:
+        return self.request(
+            method="GET",
+            url=url,
+            headers=headers,
+            params=params,
+            stream=stream,
+            **kwargs,
+        )
+
+    def post(
+        self,
+        url: str,
+        headers: Optional[Dict[str, str]] = None,
+        params: Optional[Dict[str, str]] = None,
+        stream: bool = False,
+        **kwargs,
+    ) -> Tuple[PreparedRequest, Response]:
+        return self.request(
+            method="POST",
+            url=url,
+            headers=headers,
+            params=params,
+            stream=stream,
+            **kwargs,
+        )
+
+    def patch(
+        self,
+        url: str,
+        headers: Optional[Dict[str, str]] = None,
+        params: Optional[Dict[str, str]] = None,
+        stream: bool = False,
+        **kwargs,
+    ) -> Tuple[PreparedRequest, Response]:
+        return self.request(
+            method="PATCH",
+            url=url,
+            headers=headers,
+            params=params,
+            stream=stream,
+            **kwargs,
+        )
+
+    def delete(
+        self,
+        url: str,
+        headers: Optional[Dict[str, str]] = None,
+        params: Optional[Dict[str, str]] = None,
+        stream: bool = False,
+        **kwargs,
+    ) -> Tuple[PreparedRequest, Response]:
+        return self.request(
+            method="DELETE",
+            url=url,
+            headers=headers,
+            params=params,
+            stream=stream,
+            **kwargs,
+        )
+
+    def put(
+        self,
+        url: str,
+        headers: Optional[Dict[str, str]] = None,
+        params: Optional[Dict[str, str]] = None,
+        stream: bool = False,
+        **kwargs,
+    ) -> Tuple[PreparedRequest, Response]:
+        return self.request(
+            method="PUT",
+            url=url,
+            headers=headers,
+            params=params,
+            stream=stream,
+            **kwargs,
+        )

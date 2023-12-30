@@ -296,8 +296,7 @@ class DiscogsClient(HttpClient):
         if currency is not None:
             params["curr_abbr"] = currency
 
-        _, response = self.request(
-            method="GET",
+        _, response = self.get(
             url=f"{self.base_url}/releases/{release_id}",
             params=params,
             **kwargs,
@@ -311,8 +310,7 @@ class DiscogsClient(HttpClient):
         """
         Get a Discogs artist.
         """
-        _, response = self.request(
-            method="GET",
+        _, response = self.get(
             url=f"{self.base_url}/artists/{artist_id}",
             **kwargs,
         )
@@ -345,8 +343,7 @@ class DiscogsClient(HttpClient):
         next_url = f"{self.base_url}/database/search"
 
         while next_url is not None:
-            _, response = self.request(
-                method="GET",
+            _, response = self.get(
                 url=next_url,
                 params=params,
                 **kwargs,

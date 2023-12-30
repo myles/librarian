@@ -317,7 +317,7 @@ class OpenLibraryClient(HttpClient):
         """
         url = f"{self.base_url}/isbn/{isbn}.json"
 
-        _request, response = self.request(method="GET", url=url, **kwargs)
+        _request, response = self.get(url=url, **kwargs)
         response.raise_for_status()
         data = response.json()
 
@@ -329,7 +329,7 @@ class OpenLibraryClient(HttpClient):
         """
         url = f"{self.base_url}/authors/{key}.json"
 
-        _request, response = self.request(method="GET", url=url, **kwargs)
+        _request, response = self.get(url=url, **kwargs)
         response.raise_for_status()
         data = response.json()
 
@@ -341,7 +341,7 @@ class OpenLibraryClient(HttpClient):
         """
         url = f"{self.base_url}/works/{key}.json"
 
-        _request, response = self.request(method="GET", url=url, **kwargs)
+        _request, response = self.get(url=url, **kwargs)
         response.raise_for_status()
         data = response.json()
 

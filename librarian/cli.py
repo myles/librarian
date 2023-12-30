@@ -12,5 +12,5 @@ def cli():
     """
 
 
-cli.add_command(books_cli, name="books")
-cli.add_command(vinyl_cli, name="vinyl")
+cli.add_command(books_cli, name="books")  # type: ignore
+cli.add_command(vinyl_cli, name="vinyl")  # type: ignore
