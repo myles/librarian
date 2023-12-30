@@ -1,8 +1,12 @@
 {
   "title": "Myles' Library",
+  "description": "A collection of books, video games, and vinyl records that I (Myles) own.",
+  "license": "ODbL",
+  "license_url": "https://opendatacommons.org/licenses/odbl/",
   "databases": {
     "books": {
       "title": "Books",
+      "description": "A collection of books that I (Myles) own.",
       "tables": {
         "books": {
           "sort": "title",
@@ -19,12 +23,22 @@
           "hidden": true
         },
         "openlibrary_entities": {
+          "hidden": true,
+          "source": "Open Library",
+          "source_url": "https://openlibrary.org/",
+          "license": "Public Domain"
+        },
+        "_litestream_lock": {
+          "hidden": true
+        },
+        "_litestream_seq": {
           "hidden": true
         }
       }
     },
     "vinyl": {
       "title": "Vinyl Records",
+      "description": "A collection of vinyl records that I (Myles) own.",
       "tables": {
         "artists": {
           "sort": "name"
@@ -36,15 +50,29 @@
           "hidden": true
         },
         "discogs_artists": {
-          "hidden": true
+          "hidden": true,
+          "source": "Discogs",
+          "source_url": "https://www.discogs.com/",
+          "license": "CC0 No Rights Reserved",
+          "license_url": "https://creativecommons.org/public-domain/cc0/"
         },
         "discogs_releases": {
-          "hidden": true
+          "hidden": true,
+          "source": "Discogs",
+          "source_url": "https://www.discogs.com/",
+          "license": "CC0 No Rights Reserved",
+          "license_url": "https://creativecommons.org/public-domain/cc0/"
         },
         "styles": {
           "hidden": true
         },
         "vinyl_records_artists": {
+          "hidden": true
+        },
+        "_litestream_lock": {
+          "hidden": true
+        },
+        "_litestream_seq": {
           "hidden": true
         }
       }

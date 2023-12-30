@@ -42,4 +42,5 @@ clean:
 
 .PHONY: datasette
 datasette: dbs/*.db
-	poetry run datasette serve ./dbs/ --metadata metadata.json
+	poetry run datasette serve ./dbs/ \
+		--metadata metadata.json

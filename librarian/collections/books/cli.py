@@ -68,10 +68,9 @@ def add_book(isbn: str):
     "--format",
     "output_format",
     type=click.Choice(["csv", "json", "markdown"]),
-    default="markdown",
     help="Format to output the results.",
 )
-def list_books(output_format: str = "markdown"):
+def list_books(output_format: str = ""):
     """List the books in the library's collection."""
     db = Database(Settings.BOOK_DB_PATH)
     service.build_database(db)
@@ -85,3 +84,11 @@ def list_books(output_format: str = "markdown"):
     elif output_format == "markdown":
         table = tabulate(books, headers="keys", tablefmt="github")
         click.echo(table)
+    else:
+        table = tabulate(
+            books,
+            headers={"isbn": "ISBN", "title": "Title", "authors": "Author(s)"},
+            tablefmt="grid",
+            maxcolwidths=[None, 24, 24],
+        )
+        click.echo_via_pager(table)

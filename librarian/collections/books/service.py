@@ -81,14 +81,15 @@ def build_database(db: Database):
         select
             books.id,
             books.title,
+            books.description,
             iif(books.isbn_13, books.isbn_13, books.isbn_10) as isbn,
             group_concat(authors.name, ', ') as authors
         from
             authors
-            left outer join books_authors
-                on books_authors.author_id = authors.id
-            left outer join books
-                on books.id = books_authors.book_id
+        left outer join books_authors
+            on books_authors.author_id = authors.id
+        left outer join books
+            on books.id = books_authors.book_id
         group by
             books.title
         order by
@@ -281,4 +282,4 @@ def list_books(db: Database) -> Generator[Dict[str, Any], None, None]:
     Returns a list of books in the SQLite database.
     """
     table = db.table("list_books_and_authors")
-    return table.rows_where(select="id, title, isbn, authors")
+    return table.rows_where(select="isbn, title, authors")
