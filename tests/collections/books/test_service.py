@@ -5,8 +5,7 @@ import pytest
 
 from librarian.collections.books import service
 from librarian.integrations import openlibrary
-
-from ...openlibrary_responses import BOOK_RESPONSE
+from tests.integrations.openlibrary.openlibrary_responses import BOOK_RESPONSE
 
 
 def test_build_database(mock_db):

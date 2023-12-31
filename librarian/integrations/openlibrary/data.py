@@ -1,17 +1,14 @@
 import datetime
 import re
+import typing as t
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 
 import pytz
 from dateutil.parser import parse as dateutil_parse
-from requests import Session
-
-from ..utils.http_client import HttpClient
 
 
-def format_date(value: Optional[str]) -> Optional[datetime.date]:
+def format_date(value: t.Optional[str]) -> t.Optional[datetime.date]:
     """
     Convert an Open Library date to a Python date object.
     """
@@ -25,7 +22,7 @@ def format_date(value: Optional[str]) -> Optional[datetime.date]:
         return dateutil_parse(value, default=default).date()
 
 
-def format_datetime(value: Optional[str]) -> Optional[datetime.datetime]:
+def format_datetime(value: t.Optional[str]) -> t.Optional[datetime.datetime]:
     """
     Convert an Open Library datetime to a Python timezone aware datetime
     object.
@@ -53,7 +50,7 @@ def format_key(string: str) -> str:
     return match.groupdict()["key"]
 
 
-def format_key_list(data: List[Dict[str, str]]) -> List[str]:
+def format_key_list(data: t.List[t.Dict[str, str]]) -> t.List[str]:
     """
     Convert a list of Open Library key objects to a Python list of strings.
     """
@@ -66,33 +63,33 @@ class OpenLibraryBook:
     key: str
     publish_date: datetime.date
 
-    isbn_10: List[str] = field(default_factory=list)
-    isbn_13: List[str] = field(default_factory=list)
+    isbn_10: t.List[str] = field(default_factory=list)
+    isbn_13: t.List[str] = field(default_factory=list)
 
     type_key: str = ""
-    author_keys: List[str] = field(default_factory=list)
-    language_keys: List[str] = field(default_factory=list)
-    work_keys: List[str] = field(default_factory=list)
+    author_keys: t.List[str] = field(default_factory=list)
+    language_keys: t.List[str] = field(default_factory=list)
+    work_keys: t.List[str] = field(default_factory=list)
 
-    publishers: List[str] = field(default_factory=list)
-    number_of_pages: Optional[int] = None
-    covers: List[int] = field(default_factory=list)
-    ocaid: Optional[str] = None
-    contributions: List[str] = field(default_factory=list)
-    classifications: Dict[str, Any] = field(default_factory=dict)
-    source_records: List[str] = field(default_factory=list)
-    identifiers: Dict[str, List[str]] = field(default_factory=dict)
-    local_id: List[str] = field(default_factory=list)
+    publishers: t.List[str] = field(default_factory=list)
+    number_of_pages: t.Optional[int] = None
+    covers: t.List[int] = field(default_factory=list)
+    ocaid: t.Optional[str] = None
+    contributions: t.List[str] = field(default_factory=list)
+    classifications: t.Dict[str, t.Any] = field(default_factory=dict)
+    source_records: t.List[str] = field(default_factory=list)
+    identifiers: t.Dict[str, t.List[str]] = field(default_factory=dict)
+    local_id: t.List[str] = field(default_factory=list)
     first_sentence: str = ""
-    latest_revision: Optional[int] = None
-    revision: Optional[int] = None
-    created: Optional[datetime.datetime] = None
-    last_modified: Optional[datetime.datetime] = None
+    latest_revision: t.Optional[int] = None
+    revision: t.Optional[int] = None
+    created: t.Optional[datetime.datetime] = None
+    last_modified: t.Optional[datetime.datetime] = None
 
-    data: Dict[str, Any] = field(default_factory=dict, repr=False)
+    data: t.Dict[str, t.Any] = field(default_factory=dict, repr=False)
 
     @classmethod
-    def from_data(cls, data: Dict[str, Any]):
+    def from_data(cls, data: t.Dict[str, t.Any]):
         defaults = deepcopy(data)
 
         safe_keys = (
@@ -152,25 +149,25 @@ class OpenLibraryWork:
     key: str
     type_key: str = "work"
 
-    author_keys: List[str] = field(default_factory=list)
+    author_keys: t.List[str] = field(default_factory=list)
     description: str = ""
-    covers: List[int] = field(default_factory=list)
+    covers: t.List[int] = field(default_factory=list)
 
-    subjects: List[str] = field(default_factory=list)
-    subject_people: List[str] = field(default_factory=list)
-    subject_places: List[str] = field(default_factory=list)
-    subject_times: List[str] = field(default_factory=list)
+    subjects: t.List[str] = field(default_factory=list)
+    subject_people: t.List[str] = field(default_factory=list)
+    subject_places: t.List[str] = field(default_factory=list)
+    subject_times: t.List[str] = field(default_factory=list)
 
-    location: Optional[str] = None
-    latest_revision: Optional[int] = None
-    revision: Optional[int] = None
-    created: Optional[datetime.datetime] = None
-    last_modified: Optional[datetime.datetime] = None
+    location: t.Optional[str] = None
+    latest_revision: t.Optional[int] = None
+    revision: t.Optional[int] = None
+    created: t.Optional[datetime.datetime] = None
+    last_modified: t.Optional[datetime.datetime] = None
 
-    data: Dict[str, Any] = field(default_factory=dict, repr=False)
+    data: t.Dict[str, t.Any] = field(default_factory=dict, repr=False)
 
     @classmethod
-    def from_data(cls, data: Dict[str, Any]):
+    def from_data(cls, data: t.Dict[str, t.Any]):
         defaults = deepcopy(data)
 
         safe_keys = (
@@ -221,7 +218,7 @@ class OpenLibraryLink:
     type_key: str
 
     @classmethod
-    def from_data(cls, data: Dict[str, Any]):
+    def from_data(cls, data: t.Dict[str, t.Any]):
         data["type_key"] = format_key(data.pop("type")["key"])
 
         safe_keys = ("url", "title", "type_key")
@@ -240,21 +237,21 @@ class OpenLibraryAuthor:
 
     personal_name: str = ""
     bio: str = ""
-    birth_date: Optional[datetime.date] = None
-    death_date: Optional[datetime.date] = None
-    remote_ids: Dict[str, List[str]] = field(default_factory=dict)
-    links: List[OpenLibraryLink] = field(default_factory=list)
-    photos: List[str] = field(default_factory=list)
-    source_records: List[str] = field(default_factory=list)
-    latest_revision: Optional[int] = None
-    revision: Optional[int] = None
-    created: Optional[datetime.datetime] = None
-    last_modified: Optional[datetime.datetime] = None
+    birth_date: t.Optional[datetime.date] = None
+    death_date: t.Optional[datetime.date] = None
+    remote_ids: t.Dict[str, t.List[str]] = field(default_factory=dict)
+    links: t.List[OpenLibraryLink] = field(default_factory=list)
+    photos: t.List[str] = field(default_factory=list)
+    source_records: t.List[str] = field(default_factory=list)
+    latest_revision: t.Optional[int] = None
+    revision: t.Optional[int] = None
+    created: t.Optional[datetime.datetime] = None
+    last_modified: t.Optional[datetime.datetime] = None
 
-    data: Dict[str, Any] = field(default_factory=dict, repr=False)
+    data: t.Dict[str, t.Any] = field(default_factory=dict, repr=False)
 
     @classmethod
-    def from_data(cls, data: Dict[str, Any]):
+    def from_data(cls, data: t.Dict[str, t.Any]):
         defaults = deepcopy(data)
 
         safe_keys = (
@@ -303,46 +300,3 @@ class OpenLibraryAuthor:
             ]
 
         return cls(**defaults, data=data)
-
-
-class OpenLibraryClient(HttpClient):
-    def __init__(self, session: Optional[Session] = None):
-        super().__init__(session=session)
-
-        self.base_url = "https://openlibrary.org"
-
-    def get_book_from_isbn(self, isbn: str, **kwargs) -> OpenLibraryBook:
-        """
-        Get a book from the OpenLibrary API using its ISBN.
-        """
-        url = f"{self.base_url}/isbn/{isbn}.json"
-
-        _request, response = self.get(url=url, **kwargs)
-        response.raise_for_status()
-        data = response.json()
-
-        return OpenLibraryBook.from_data(data)
-
-    def get_author(self, key: str, **kwargs) -> OpenLibraryAuthor:
-        """
-        Get an author from the OpenLibrary API using its key.
-        """
-        url = f"{self.base_url}/authors/{key}.json"
-
-        _request, response = self.get(url=url, **kwargs)
-        response.raise_for_status()
-        data = response.json()
-
-        return OpenLibraryAuthor.from_data(data)
-
-    def get_work(self, key: str, **kwargs) -> OpenLibraryWork:
-        """
-        Get a work from OpenLibrary API using its key.
-        """
-        url = f"{self.base_url}/works/{key}.json"
-
-        _request, response = self.get(url=url, **kwargs)
-        response.raise_for_status()
-        data = response.json()
-
-        return OpenLibraryWork.from_data(data)

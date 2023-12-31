@@ -5,100 +5,10 @@ import pytest
 import responses
 from responses.matchers import query_param_matcher
 
-from librarian.integrations import discogs
+from librarian.integrations.discogs import service
 from librarian.settings import Settings
 
-from .. import discogs_responses
-
-
-@pytest.mark.parametrize(
-    "value, expected_result",
-    (
-        ("1:00", 60),
-        ("1:30", 90),
-    ),
-)
-def test_transform_duration(value, expected_result):
-    result = discogs.transform_duration(value)
-    assert result == expected_result
-
-
-def test_discogs_image__from_data():
-    data = deepcopy(discogs_responses.DISCOGS_RELEASE_IMAGE_PRIMARY)
-
-    image = discogs.DiscogsImage.from_data(data)
-    assert image.type == data["type"]
-    assert image.height == data["height"]
-    assert image.width == data["width"]
-    assert image.resource_url == data["resource_url"]
-
-
-def test_discogs_member_artist__from_data():
-    data = deepcopy(discogs_responses.DISCOGS_ARTIST_MEMBER)
-
-    artist = discogs.DiscogsArtistMember.from_data(data)
-    assert artist.id == data["id"]
-    assert artist.name == data["name"]
-    assert artist.is_active is data["active"]
-
-
-def test_discogs_artist__from_data():
-    data = deepcopy(discogs_responses.DISCOGS_ARTIST)
-
-    artist = discogs.DiscogsArtist.from_data(data)
-    assert artist.id == data["id"]
-    assert artist.name_variations == data["namevariations"]
-    assert artist.profile == data["profile"]
-    assert len(artist.members) == len(data["members"])
-
-
-def test_discogs_release_track_artist__from_data():
-    data = deepcopy(discogs_responses.DISCOGS_RELEASE_TRACK_ARTIST)
-
-    artist = discogs.DiscogsReleaseTrackArtist.from_data(data)
-    assert artist.id == data["id"]
-    assert artist.name == data["name"]
-    assert artist.role == data["role"]
-
-
-def test_discogs_release_track__from_data():
-    data = deepcopy(discogs_responses.DISCOGS_RELEASE_TRACK)
-
-    track = discogs.DiscogsReleaseTrack.from_data(data)
-    assert track.title == data["title"]
-    assert track.duration == discogs.transform_duration(data["duration"])
-    assert track.position == data["position"]
-
-
-@pytest.mark.parametrize(
-    "identifiers, expected_barcode",
-    (
-        ([{"type": "Barcode", "value": "5012394144777"}], "5012394144777"),
-        ([{"type": "Barcode", "value": ""}], None),
-        ([], None),
-    ),
-)
-def test_discogs_release__from_data(identifiers, expected_barcode):
-    data = deepcopy(discogs_responses.DISCOGS_RELEASE)
-    data["identifiers"] = identifiers
-
-    release = discogs.DiscogsRelease.from_data(data)
-    assert release.id == data["id"]
-    assert release.title == data["title"]
-    assert release.year == data["year"]
-    assert release.artists[0].id == data["artists"][0]["id"]
-    assert release.barcode == expected_barcode
-    assert release.tracks[0].title == data["tracklist"][0]["title"]
-
-
-def test_discogs_search_result__from_data():
-    data = deepcopy(discogs_responses.DISCOGS_SEARCH_RESULT_ONE)
-
-    search_result = discogs.DiscogsSearchResult.from_data(data)
-    assert search_result.id == data["id"]
-    assert search_result.type == data["type"]
-    assert search_result.title == data["title"]
-    assert search_result.url == f"https://discogs.com{data['uri']}"
+from . import discogs_responses
 
 
 @responses.activate
@@ -114,7 +24,7 @@ def test_discogs_client(mocker):
 
     responses.add(responses.Response(method="GET", url=url))
 
-    client = discogs.DiscogsClient()
+    client = service.DiscogsClient()
     request, _ = client.request(method="GET", url=url)
 
     assert "Authorization" in request.headers
@@ -147,7 +57,7 @@ def test_discogs_client__get_release(currency):
         )
     )
 
-    client = discogs.DiscogsClient()
+    client = service.DiscogsClient()
     release = client.get_release(release_id=release_id, currency=currency)
 
     assert release.id == response_data["id"]
@@ -169,7 +79,7 @@ def test_discogs_client__get_artist():
         )
     )
 
-    client = discogs.DiscogsClient()
+    client = service.DiscogsClient()
     atrist = client.get_artist(artist_id=artist_id)
 
     assert atrist.id == response_data["id"]
@@ -244,7 +154,7 @@ def test_discogs_client__search(query, type, barcode, request_query):
         )
     )
 
-    client = discogs.DiscogsClient()
+    client = service.DiscogsClient()
     results = list(client.search(query=query, type=type, barcode=barcode))
 
     assert len(results) == 2

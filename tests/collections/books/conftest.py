@@ -4,7 +4,7 @@ import pytest
 
 from librarian.integrations import openlibrary
 
-from ... import openlibrary_responses
+from ...integrations.openlibrary import openlibrary_responses
 
 
 @pytest.fixture

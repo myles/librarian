@@ -2,10 +2,10 @@ import pytest
 import responses
 from responses.matchers import query_param_matcher
 
-from librarian.integrations import genius
+from librarian.integrations.genius import service
 from librarian.settings import Settings
 
-from .. import genius_responses
+from . import genius_responses
 
 
 @responses.activate
@@ -21,7 +21,7 @@ def test_genius_client(mocker):
 
     responses.add(responses.Response(method="GET", url=url))
 
-    client = genius.GeniusClient()
+    client = service.GeniusClient()
     request, _ = client.request(method="GET", url=url)
 
     assert "Authorization" in request.headers
@@ -50,7 +50,7 @@ def test_genius_client__get_song(text_format, expected_text_format_parma):
         )
     )
 
-    client = genius.GeniusClient()
+    client = service.GeniusClient()
     song = client.get_song(song_id, text_format=text_format)
 
     assert song.id == song_id

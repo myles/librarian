@@ -1,9 +1,12 @@
 import datetime
-from typing import Any, Dict, Generator, Iterable, List, Optional, Union
+import typing as t
 
-from sqlite_utils.db import Database, Table
+from pandas import DataFrame
+from sqlite_utils.db import Database, Table, View
+from tabulate import tabulate
 
 from ...integrations import openlibrary
+from . import constants
 
 
 def build_database(db: Database):
@@ -75,8 +78,13 @@ def build_database(db: Database):
             ),
         )
 
+    # Views
+    list_books_and_authors_view: View = db.table(
+        "list_books_and_authors"
+    )  # type: ignore
+
     db.create_view(
-        name="list_books_and_authors",
+        name=list_books_and_authors_view.name,
         sql="""
         select
             books.id,
@@ -101,7 +109,7 @@ def build_database(db: Database):
 
 def get_openlibrary_book_cover_url(
     book: openlibrary.OpenLibraryBook,
-) -> Optional[str]:
+) -> t.Optional[str]:
     """
     Get the URL for the book's cover from OpenLibrary.
     """
@@ -113,7 +121,7 @@ def get_openlibrary_book_cover_url(
     return f"https://covers.openlibrary.org/b/id/{cover_id}-L.jpg"
 
 
-OpenLibraryEntities = Union[
+OpenLibraryEntities = t.Union[
     openlibrary.OpenLibraryAuthor,
     openlibrary.OpenLibraryBook,
     openlibrary.OpenLibraryWork,
@@ -121,7 +129,7 @@ OpenLibraryEntities = Union[
 
 
 def upsert_openlibrary_entities(
-    entities: Iterable[OpenLibraryEntities], db: Database
+    entities: t.Iterable[OpenLibraryEntities], db: Database
 ):
     """
     Upsert all the entities from OpenLibrary into the SQLite database.
@@ -144,9 +152,9 @@ def upsert_openlibrary_entities(
 
 def upsert_book_from_open_library(
     book: openlibrary.OpenLibraryBook,
-    works: List[openlibrary.OpenLibraryWork],
+    works: t.List[openlibrary.OpenLibraryWork],
     db: Database,
-) -> Dict[str, Any]:
+) -> t.Dict[str, t.Any]:
     """
     Upsert a book into the SQLite database.
     """
@@ -158,11 +166,11 @@ def upsert_book_from_open_library(
         )
     )
 
-    existing_book_id: Optional[int] = None
+    existing_book_id: t.Optional[int] = None
     if existing_book_ids:
         existing_book_id, _ = existing_book_ids[0]
 
-    record: Dict[str, Any] = {
+    record: t.Dict[str, t.Any] = {
         "openlibrary_key": book.key,
         "title": book.title,
         "cover": get_openlibrary_book_cover_url(book),
@@ -191,7 +199,7 @@ def upsert_book_from_open_library(
 
 
 def get_book_from_openlibrary(
-    isbn: str, client: Optional[openlibrary.OpenLibraryClient] = None
+    isbn: str, client: t.Optional[openlibrary.OpenLibraryClient] = None
 ) -> openlibrary.OpenLibraryBook:
     """
     Get a book from OpenLibrary's API.
@@ -204,7 +212,7 @@ def get_book_from_openlibrary(
 
 def get_work_from_openlibrary(
     openlibrary_key: str,
-    client: Optional[openlibrary.OpenLibraryClient] = None,
+    client: t.Optional[openlibrary.OpenLibraryClient] = None,
 ) -> openlibrary.OpenLibraryWork:
     """
     Get a work from OpenLibrary's API.
@@ -217,7 +225,7 @@ def get_work_from_openlibrary(
 
 def upset_author_from_openlibrary(
     author: openlibrary.OpenLibraryAuthor, db: Database
-) -> Dict[str, Any]:
+) -> t.Dict[str, t.Any]:
     """
     Upsert an author from OpenLibrary an SQLite database.
     """
@@ -229,11 +237,11 @@ def upset_author_from_openlibrary(
         )
     )
 
-    existing_author_id: Optional[int] = None
+    existing_author_id: t.Optional[int] = None
     if existing_author_ids:
         existing_author_id, _ = existing_author_ids[0]
 
-    record: Dict[str, Any] = {
+    record: t.Dict[str, t.Any] = {
         "openlibrary_key": author.key,
         "name": author.name,
         "updated_at": datetime.datetime.utcnow(),
@@ -250,7 +258,8 @@ def upset_author_from_openlibrary(
 
 
 def get_author_from_openlibrary(
-    openlibrary_key: str, client: Optional[openlibrary.OpenLibraryClient] = None
+    openlibrary_key: str,
+    client: t.Optional[openlibrary.OpenLibraryClient] = None,
 ) -> openlibrary.OpenLibraryAuthor:
     """
     Add an author to the collection.
@@ -262,7 +271,9 @@ def get_author_from_openlibrary(
 
 
 def link_book_to_authors(
-    book_row: Dict[str, Any], author_rows: List[Dict[str, Any]], db: Database
+    book_row: t.Dict[str, t.Any],
+    author_rows: t.List[t.Dict[str, t.Any]],
+    db: Database,
 ):
     """
     Upsert the M2M connection between a book and it's authors.
@@ -277,9 +288,152 @@ def link_book_to_authors(
     table.upsert_all(records, pk=["book_id", "author_id"])
 
 
-def list_books(db: Database) -> Generator[Dict[str, Any], None, None]:
+FETCH_BOOK_AND_RELATED_DATA_RETURN = t.Tuple[
+    openlibrary.OpenLibraryBook,
+    t.List[openlibrary.OpenLibraryWork],
+    t.List[openlibrary.OpenLibraryAuthor],
+]
+
+
+def fetch_book_and_related_data(
+    isbn: str,
+    client: t.Optional[openlibrary.OpenLibraryClient] = None,
+) -> FETCH_BOOK_AND_RELATED_DATA_RETURN:
+    """
+    Fetch a book and all it's related data from OpenLibrary.
+    """
+    if client is None:
+        client = openlibrary.OpenLibraryClient()
+
+    book = get_book_from_openlibrary(isbn=isbn, client=client)
+    works = [
+        get_work_from_openlibrary(work_key, client=client)
+        for work_key in book.work_keys
+    ]
+
+    if works:
+        author_keys = [
+            author_key for work in works for author_key in work.author_keys
+        ]
+    else:
+        author_keys = book.author_keys
+
+    authors = [
+        get_author_from_openlibrary(openlibrary_key=author_key, client=client)
+        for author_key in author_keys
+    ]
+
+    return book, works, authors
+
+
+def upsert_book_and_related_data(
+    book: openlibrary.OpenLibraryBook,
+    works: t.List[openlibrary.OpenLibraryWork],
+    authors: t.List[openlibrary.OpenLibraryAuthor],
+    db: Database,
+) -> None:
+    """
+    Upsert a book and all it's related data from OpenLibrary.
+    """
+    # Save everything to our first class tables.
+    book_row = upsert_book_from_open_library(book, works, db=db)
+    author_rows = [
+        upset_author_from_openlibrary(author, db=db) for author in authors
+    ]
+    link_book_to_authors(book_row, author_rows, db=db)
+
+    # Save the API responses from Openlibrary.
+    upsert_openlibrary_entities(
+        entities=[book] + authors + works,  # type: ignore
+        db=db,
+    )
+
+
+def list_books(db: Database) -> t.Generator[t.Dict[str, t.Any], None, None]:
     """
     Returns a list of books in the SQLite database.
     """
     table = db.table("list_books_and_authors")
     return table.rows_where(select="isbn, title, authors")
+
+
+def search_books(
+    db: Database, query: str
+) -> t.Generator[t.Dict[str, t.Any], None, None]:
+    """
+    Search the SQLite database for books.
+    """
+    books_table: Table = db.table("books")  # type: ignore
+
+    view: View = db.table("list_books_and_authors")  # type: ignore
+
+    book_ids = [
+        row["id"] for row in books_table.search(q=query, columns=("id",))
+    ]
+
+    return view.rows_where(
+        select="isbn, title, authors",
+        where="id in ({})".format(",".join("?" * len(book_ids))),
+        where_args=book_ids,
+    )
+
+
+def format_books_as_csv(
+    books: t.Generator[t.Dict[str, t.Any], None, None]
+) -> str:
+    """
+    Format a list of books as CSV.
+    """
+    return DataFrame(books).to_csv(index=False)
+
+
+def format_books_as_json(
+    books: t.Generator[t.Dict[str, t.Any], None, None]
+) -> str:
+    """
+    Format a list of books as JSON.
+    """
+    return DataFrame(books).to_json(orient="records", indent=2)
+
+
+def format_books_as_markdown(
+    books: t.Generator[t.Dict[str, t.Any], None, None]
+) -> str:
+    """
+    Format a list of books as Markdown.
+    """
+    return tabulate(books, headers="keys", tablefmt="github")
+
+
+def format_books_as_table(
+    books: t.Generator[t.Dict[str, t.Any], None, None]
+) -> str:
+    """
+    Format a list of books as a table.
+    """
+    return tabulate(
+        books,
+        headers={"isbn": "ISBN", "title": "Title", "authors": "Author(s)"},
+        tablefmt="grid",
+        maxcolwidths=[None, 24, 24],
+    )
+
+
+def format_books(
+    books: t.Generator[t.Dict[str, t.Any], None, None],
+    output_format: str,
+) -> str:
+    """
+    Format a list of books.
+    """
+    if output_format == constants.OUTPUT_FORMAT_CSV:
+        return format_books_as_csv(books)
+    elif output_format == constants.OUTPUT_FORMAT_JSON:
+        return format_books_as_json(books)
+    elif output_format == constants.OUTPUT_FORMAT_MARKDOWN:
+        return format_books_as_markdown(books)
+
+    raise ValueError(
+        f"Invalid output format: {output_format}. Must be one of: "
+        f"{', '.join(constants.OUTPUT_FORMATS)}"
+    )

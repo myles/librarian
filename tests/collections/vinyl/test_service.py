@@ -8,7 +8,7 @@ from librarian.integrations.discogs import (
     DiscogsReleaseArtist,
 )
 
-from ... import discogs_responses
+from ...integrations.discogs import discogs_responses
 
 
 def test_build_database(mock_db):

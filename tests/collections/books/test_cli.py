@@ -3,7 +3,7 @@ import responses
 
 from librarian.collections.books import cli
 
-from ... import openlibrary_responses
+from ...integrations.openlibrary import openlibrary_responses
 
 
 @responses.activate
