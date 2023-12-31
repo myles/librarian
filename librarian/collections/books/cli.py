@@ -1,8 +1,8 @@
 import click
-from sqlite_utils.db import Database
 
 from ...integrations.openlibrary import OpenLibraryClient
 from ...settings import Settings
+from ...utils.database import get_database
 from . import constants, service
 
 
@@ -19,13 +19,13 @@ def cli():
 )
 def add_book(isbn: str):
     """Add a book to the library's collection."""
-    db = Database(Settings.BOOK_DB_PATH)
-    service.build_database(db)
+    db = get_database(Settings.BOOK_DB_PATH)
+    service.build_database(db=db)
 
     client = OpenLibraryClient()
 
     book, works, authors = service.fetch_book_and_related_data(
-        isbn=isbn,
+        isbn,
         client=client,
     )
 
@@ -39,8 +39,8 @@ def add_books():
     """
     Add multiple books to the library's collection through a text editor.
     """
-    db = Database(Settings.BOOK_DB_PATH)
-    service.build_database(db)
+    db = get_database(Settings.BOOK_DB_PATH)
+    service.build_database(db=db)
 
     client = OpenLibraryClient()
 
@@ -52,7 +52,7 @@ def add_books():
 
     for isbn in isbns:
         book, works, authors = service.fetch_book_and_related_data(
-            isbn=isbn, client=client
+            isbn, client=client
         )
 
         service.upsert_book_and_related_data(
@@ -70,17 +70,16 @@ def add_books():
 )
 def list_books(output_format: str = ""):
     """List the books in the library's collection."""
-    db = Database(Settings.BOOK_DB_PATH)
-    service.build_database(db)
+    db = get_database(Settings.BOOK_DB_PATH)
+    service.build_database(db=db)
 
-    books = service.list_books(db)
+    books = service.list_books(db=db)
 
     # If the user specified a format, output the results in that format.
     if output_format in constants.OUTPUT_FORMATS:
-        click.echo(service.format_books_as_csv(books))
-        return
-
-    click.echo_via_pager(service.format_books_as_table(books))
+        click.echo(service.format_books(books, output_format))
+    else:
+        click.echo_via_pager(service.format_books_as_table(books))
 
 
 @cli.command(name="search")
@@ -94,14 +93,13 @@ def list_books(output_format: str = ""):
 )
 def search_books(query: str, output_format: str = ""):
     """Search the library's collection."""
-    db = Database(Settings.BOOK_DB_PATH)
-    service.build_database(db)
+    db = get_database(Settings.BOOK_DB_PATH)
+    service.build_database(db=db)
 
-    books = service.search_books(db=db, query=query)
+    books = service.search_books(query, db=db)
 
     # If the user specified a format, output the results in that format.
     if output_format in constants.OUTPUT_FORMATS:
         click.echo(service.format_books_as_csv(books))
-        return
-
-    click.echo_via_pager(service.format_books_as_table(books))
+    else:
+        click.echo_via_pager(service.format_books_as_table(books))

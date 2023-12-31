@@ -2,14 +2,15 @@ import datetime
 import typing as t
 
 from pandas import DataFrame
-from sqlite_utils.db import Database, Table, View
+from sqlite_utils.db import Database, Table
 from tabulate import tabulate
 
 from ...integrations import openlibrary
+from ...utils.database import get_table, get_view
 from . import constants
 
 
-def build_database(db: Database):
+def build_database(*, db: Database):
     """
     Build the SQLite database for the books' library.
     """
@@ -47,7 +48,9 @@ def build_database(db: Database):
                 "updated_at": datetime.datetime,
             },
             pk="id",
-            foreign_keys=(("openlibrary_key", "openlibrary_entities", "key"),),
+            foreign_keys=(
+                ("openlibrary_key", openlibrary_entities_table.name, "key"),
+            ),
         )
         books_table.enable_fts(["title"], create_triggers=True)
 
@@ -61,7 +64,9 @@ def build_database(db: Database):
                 "updated_at": datetime.datetime,
             },
             pk="id",
-            foreign_keys=(("openlibrary_key", "openlibrary_entities", "key"),),
+            foreign_keys=(
+                ("openlibrary_key", openlibrary_entities_table.name, "key"),
+            ),
         )
         authors_table.enable_fts(["name"], create_triggers=True)
 
@@ -73,18 +78,14 @@ def build_database(db: Database):
             },
             pk=("book_id", "author_id"),
             foreign_keys=(
-                ("book_id", "books", "id"),
-                ("author_id", "authors", "id"),
+                ("book_id", books_table.name, "id"),
+                ("author_id", authors_table.name, "id"),
             ),
         )
 
     # Views
-    list_books_and_authors_view: View = db.table(
-        "list_books_and_authors"
-    )  # type: ignore
-
     db.create_view(
-        name=list_books_and_authors_view.name,
+        name="list_books_and_authors",
         sql="""
         select
             books.id,
@@ -129,12 +130,14 @@ OpenLibraryEntities = t.Union[
 
 
 def upsert_openlibrary_entities(
-    entities: t.Iterable[OpenLibraryEntities], db: Database
+    entities: t.Iterable[OpenLibraryEntities],
+    *,
+    db: Database,
 ):
     """
     Upsert all the entities from OpenLibrary into the SQLite database.
     """
-    table: Table = db.table("openlibrary_entities")  # type: ignore
+    table = get_table("openlibrary_entities", db=db)
 
     records = []
     for entity in entities:
@@ -153,12 +156,13 @@ def upsert_openlibrary_entities(
 def upsert_book_from_open_library(
     book: openlibrary.OpenLibraryBook,
     works: t.List[openlibrary.OpenLibraryWork],
+    *,
     db: Database,
 ) -> t.Dict[str, t.Any]:
     """
     Upsert a book into the SQLite database.
     """
-    table: Table = db.table("books")  # type: ignore
+    table = get_table("books", db=db)
 
     existing_book_ids = list(
         table.pks_and_rows_where(
@@ -199,7 +203,9 @@ def upsert_book_from_open_library(
 
 
 def get_book_from_openlibrary(
-    isbn: str, client: t.Optional[openlibrary.OpenLibraryClient] = None
+    isbn: str,
+    *,
+    client: t.Optional[openlibrary.OpenLibraryClient] = None,
 ) -> openlibrary.OpenLibraryBook:
     """
     Get a book from OpenLibrary's API.
@@ -212,6 +218,7 @@ def get_book_from_openlibrary(
 
 def get_work_from_openlibrary(
     openlibrary_key: str,
+    *,
     client: t.Optional[openlibrary.OpenLibraryClient] = None,
 ) -> openlibrary.OpenLibraryWork:
     """
@@ -224,12 +231,14 @@ def get_work_from_openlibrary(
 
 
 def upset_author_from_openlibrary(
-    author: openlibrary.OpenLibraryAuthor, db: Database
+    author: openlibrary.OpenLibraryAuthor,
+    *,
+    db: Database,
 ) -> t.Dict[str, t.Any]:
     """
     Upsert an author from OpenLibrary an SQLite database.
     """
-    table: Table = db.table("authors")  # type: ignore
+    table = get_table("authors", db=db)
 
     existing_author_ids = list(
         table.pks_and_rows_where(
@@ -259,6 +268,7 @@ def upset_author_from_openlibrary(
 
 def get_author_from_openlibrary(
     openlibrary_key: str,
+    *,
     client: t.Optional[openlibrary.OpenLibraryClient] = None,
 ) -> openlibrary.OpenLibraryAuthor:
     """
@@ -273,12 +283,13 @@ def get_author_from_openlibrary(
 def link_book_to_authors(
     book_row: t.Dict[str, t.Any],
     author_rows: t.List[t.Dict[str, t.Any]],
+    *,
     db: Database,
 ):
     """
     Upsert the M2M connection between a book and it's authors.
     """
-    table: Table = db.table("books_authors")  # type: ignore
+    table = get_table("books_authors", db=db)
 
     records = [
         {"book_id": book_row["id"], "author_id": author_row["id"]}
@@ -297,6 +308,7 @@ FETCH_BOOK_AND_RELATED_DATA_RETURN = t.Tuple[
 
 def fetch_book_and_related_data(
     isbn: str,
+    *,
     client: t.Optional[openlibrary.OpenLibraryClient] = None,
 ) -> FETCH_BOOK_AND_RELATED_DATA_RETURN:
     """
@@ -327,6 +339,7 @@ def fetch_book_and_related_data(
 
 
 def upsert_book_and_related_data(
+    *,
     book: openlibrary.OpenLibraryBook,
     works: t.List[openlibrary.OpenLibraryWork],
     authors: t.List[openlibrary.OpenLibraryAuthor],
@@ -349,23 +362,26 @@ def upsert_book_and_related_data(
     )
 
 
-def list_books(db: Database) -> t.Generator[t.Dict[str, t.Any], None, None]:
+def list_books(
+    *,
+    db: Database,
+) -> t.Generator[t.Dict[str, t.Any], None, None]:
     """
     Returns a list of books in the SQLite database.
     """
-    table = db.table("list_books_and_authors")
+    table = get_view("list_books_and_authors", db=db)
     return table.rows_where(select="isbn, title, authors")
 
 
 def search_books(
-    db: Database, query: str
+    query: str, *, db: Database
 ) -> t.Generator[t.Dict[str, t.Any], None, None]:
     """
     Search the SQLite database for books.
     """
-    books_table: Table = db.table("books")  # type: ignore
+    books_table = get_table("books", db=db)
 
-    view: View = db.table("list_books_and_authors")  # type: ignore
+    view = get_view("list_books_and_authors", db=db)
 
     book_ids = [
         row["id"] for row in books_table.search(q=query, columns=("id",))

@@ -24,7 +24,7 @@ lintfix:
 
 .PHONY: mypy
 mypy:
-	poetry run mypy librarian/
+	poetry run mypy librarian/ tests/
 
 .PHONY: bandit
 bandit:

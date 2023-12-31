@@ -9,7 +9,7 @@ from ...integrations.openlibrary import openlibrary_responses
 @responses.activate
 def test_add_book(mocker, cli_runner, mock_db):
     mocker.patch(
-        "librarian.collections.books.cli.Database",
+        "librarian.collections.books.cli.get_database",
         return_value=mock_db,
     )
 
@@ -48,7 +48,7 @@ def test_add_book(mocker, cli_runner, mock_db):
 @pytest.mark.parametrize("output_format", ("csv", "json", "markdown"))
 def test_list_books(output_format, mocker, cli_runner, mock_db):
     mocker.patch(
-        "librarian.collections.books.cli.Database",
+        "librarian.collections.books.cli.get_database",
         return_value=mock_db,
     )
 

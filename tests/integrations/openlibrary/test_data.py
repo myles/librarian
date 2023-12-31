@@ -46,8 +46,12 @@ def format_datetime(value: str, expected_result: datetime.datetime):
     ),
 )
 def test_re_key(string: str, expected_group_dict: Dict[str, str]):
-    group_dict = data.RE_KEY.match(string).groupdict()
-    assert group_dict == expected_group_dict
+    match = data.RE_KEY.match(string)
+
+    if match is None:
+        pytest.fail("group_dict is None")
+
+    assert match.groupdict() == expected_group_dict
 
 
 @pytest.mark.parametrize(

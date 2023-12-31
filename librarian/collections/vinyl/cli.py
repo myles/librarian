@@ -31,7 +31,7 @@ def add_vinyl(
 ):
     """Add a vinyl record to the library's collection."""
     db = Database(Settings.VINYL_DB_PATH)
-    service.build_database(db)
+    service.build_database(db=db)
 
     client = DiscogsClient()
 
@@ -71,7 +71,7 @@ def update_artists():
     Update all the artists in the DB.
     """
     db = Database(Settings.VINYL_DB_PATH)
-    service.build_database(db)
+    service.build_database(db=db)
 
     client = DiscogsClient()
 

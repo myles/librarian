@@ -11,7 +11,7 @@ from ...integrations.openlibrary import openlibrary_responses
 def mock_book() -> openlibrary.OpenLibraryBook:
     return openlibrary.OpenLibraryBook(
         key="IAmAnOpenLibraryKey",
-        title=openlibrary_responses.BOOK_RESPONSE["title"],
+        title=openlibrary_responses.BOOK_RESPONSE["title"],  # type: ignore
         publish_date=datetime.date(1988, 10, 1),
     )
 
@@ -20,7 +20,7 @@ def mock_book() -> openlibrary.OpenLibraryBook:
 def mock_work() -> openlibrary.OpenLibraryWork:
     return openlibrary.OpenLibraryWork(
         key="IAmAnOpenLibraryKey",
-        title=openlibrary_responses.WORK_RESPONSE["title"],
+        title=openlibrary_responses.WORK_RESPONSE["title"],  # type: ignore
     )
 
 

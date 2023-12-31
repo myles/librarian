@@ -12,7 +12,7 @@ from ...integrations.discogs import discogs_responses
 
 
 def test_build_database(mock_db):
-    service.build_database(mock_db)
+    service.build_database(db=mock_db)
 
     assert mock_db["vinyl_records"].exists() is True
     assert mock_db["styles"].exists() is True

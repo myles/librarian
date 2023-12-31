@@ -6,6 +6,7 @@ from typing import Any, Dict, Generator, List, Optional
 from sqlite_utils.db import Database, Table
 
 from ...integrations import discogs
+from ...utils.database import get_table
 
 
 def build_database(db: Database):
@@ -217,7 +218,7 @@ def upsert_artist_from_discogs_artist(
     """
     Upsert an artist into the SQLite database.
     """
-    table: Table = db.table("artists")  # type: ignore
+    table = get_table("artists", db=db)
 
     existing_artist_ids = list(
         table.pks_and_rows_where(
@@ -249,7 +250,7 @@ def upsert_discogs_artist(
     """
     Upsert a discogs release into the SQLite database.
     """
-    table: Table = db.table("discogs_artists")  # type: ignore
+    table = get_table("discogs_artists", db=db)
     table = table.upsert(
         {
             "id": artist.id,
@@ -307,7 +308,7 @@ def upsert_discogs_release(
     """
     Upsert a discogs release into the SQLite database.
     """
-    table: Table = db.table("discogs_releases")  # type: ignore
+    table = get_table("discogs_releases", db=db)
     table = table.upsert(
         {
             "id": release.id,
@@ -327,10 +328,8 @@ def upsert_vinyl_from_discogs_release(
     """
     Upsert a vinyl into the SQLite database.
     """
-    vinyl_records_table: Table = db.table("vinyl_records")  # type: ignore
-    vinyl_records_artists_table: Table = db.table(
-        "vinyl_records_artists",
-    )  # type: ignore
+    vinyl_records_table = get_table("vinyl_records", db=db)
+    vinyl_records_artists_table = get_table("vinyl_records_artists", db=db)
 
     existing_vinyl_record_ids = list(
         vinyl_records_table.pks_and_rows_where(
@@ -373,7 +372,7 @@ def upsert_tracks_from_discogs_release(
     """
     Upset tracks rows into the SQLite database.
     """
-    tracks_table: Table = db.table("tracks")  # type: ignore
+    tracks_table = get_table("tracks", db=db)
 
     existing_track_rows = list(
         tracks_table.rows_where(
@@ -415,5 +414,5 @@ def list_artists(db: Database) -> Generator[Dict[str, Any], None, None]:
     """
     Returns a list of books in the SQLite database.
     """
-    table = db.table("artists")
+    table = get_table("artists", db=db)
     return table.rows

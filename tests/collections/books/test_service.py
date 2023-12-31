@@ -9,7 +9,7 @@ from tests.integrations.openlibrary.openlibrary_responses import BOOK_RESPONSE
 
 
 def test_build_database(mock_db):
-    service.build_database(mock_db)
+    service.build_database(db=mock_db)
 
     assert mock_db["books"].exists() is True
     assert mock_db["authors"].exists() is True
@@ -41,7 +41,7 @@ def test_get_openlibrary_book_cover_url(book_covers, expected_result):
 
 
 def test_upsert_openlibrary_entities(mock_db):
-    service.build_database(mock_db)
+    service.build_database(db=mock_db)
 
     entities = (
         openlibrary.OpenLibraryAuthor(key="IAmAnAuthorKey", name="An Author"),
@@ -59,59 +59,63 @@ def test_upsert_openlibrary_entities(mock_db):
 
 
 def test_upsert_book_from_open_library(mock_book, mock_work, mock_db):
-    service.build_database(mock_db)
+    service.build_database(db=mock_db)
 
     assert mock_db["books"].count == 0
 
-    row = service.upsert_book_from_open_library(mock_book, [mock_work], mock_db)
+    row = service.upsert_book_from_open_library(
+        mock_book, [mock_work], db=mock_db
+    )
     row_id = row["id"]
 
     assert row["title"] == mock_book.title
 
     assert mock_db["books"].count == 1
 
-    row = service.upsert_book_from_open_library(mock_book, [mock_work], mock_db)
+    row = service.upsert_book_from_open_library(
+        mock_book, [mock_work], db=mock_db
+    )
     assert row["id"] == row_id
 
     assert mock_db["books"].count == 1
 
 
 def test_upset_author_from_openlibrary(mock_author, mock_db):
-    service.build_database(mock_db)
+    service.build_database(db=mock_db)
 
     assert mock_db["authors"].count == 0
 
-    row = service.upset_author_from_openlibrary(mock_author, mock_db)
+    row = service.upset_author_from_openlibrary(mock_author, db=mock_db)
     row_id = row["id"]
 
     assert row["name"] == mock_author.name
 
     assert mock_db["authors"].count == 1
 
-    row = service.upset_author_from_openlibrary(mock_author, mock_db)
+    row = service.upset_author_from_openlibrary(mock_author, db=mock_db)
     assert row["id"] == row_id
 
     assert mock_db["authors"].count == 1
 
 
 def test_link_book_to_authors(mock_book, mock_work, mock_author, mock_db):
-    service.build_database(mock_db)
+    service.build_database(db=mock_db)
 
     book_row = service.upsert_book_from_open_library(
-        mock_book, [mock_work], mock_db
+        mock_book, [mock_work], db=mock_db
     )
-    author_row = service.upset_author_from_openlibrary(mock_author, mock_db)
+    author_row = service.upset_author_from_openlibrary(mock_author, db=mock_db)
 
     assert mock_db["books_authors"].count == 0
-    service.link_book_to_authors(book_row, [author_row], mock_db)
+    service.link_book_to_authors(book_row, [author_row], db=mock_db)
     assert mock_db["books_authors"].count == 1
 
-    service.link_book_to_authors(book_row, [author_row], mock_db)
+    service.link_book_to_authors(book_row, [author_row], db=mock_db)
     assert mock_db["books_authors"].count == 1
 
 
 def test_list_books(mock_db):
-    service.build_database(mock_db)
+    service.build_database(db=mock_db)
 
-    books = service.list_books(mock_db)
+    books = service.list_books(db=mock_db)
     assert len(list(books)) == 0
