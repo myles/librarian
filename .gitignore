@@ -1,5 +1,5 @@
-dbs/*.db
-dbs/*-litestream/
+dbs/
+!dbs/.gitignore
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

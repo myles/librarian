@@ -130,6 +130,30 @@ def build_database(db: Database):
             ),
         )
 
+    # Views
+    db.create_view(
+        name="vinyl_records_and_artists",
+        sql="""
+        select
+            vinyl_records.id as vinyl_record_id,
+            vinyl_records.isbn,
+            vinyl_records.title,
+            vinyl_records.year,
+            group_concat(artists.name, ', ') as artists
+        from
+            artists
+        left outer join vinyl_records_artists
+            on vinyl_records_artists.artist_id = vinyl_records_artists.artist_id
+        left outer join vinyl_records
+            on vinyl_records.id = vinyl_records_artists.vinyl_record_id
+        group by
+            vinyl_records.title
+        order by
+            vinyl_records.title
+        """,
+        replace=True,
+    )
+
 
 def query_releases_on_discogs_matching_isbn(
     isbn: str, client: Optional[discogs.DiscogsClient] = None

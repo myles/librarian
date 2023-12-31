@@ -43,4 +43,5 @@ clean:
 .PHONY: datasette
 datasette: dbs/*.db
 	poetry run datasette serve ./dbs/ \
+		--crossdb \
 		--metadata metadata.json

@@ -28,6 +28,9 @@
           "source_url": "https://openlibrary.org/",
           "license": "Public Domain"
         },
+        "_counts": {
+          "hidden": true
+        },
         "_litestream_lock": {
           "hidden": true
         },
@@ -67,6 +70,9 @@
           "hidden": true
         },
         "vinyl_records_artists": {
+          "hidden": true
+        },
+        "_counts": {
           "hidden": true
         },
         "_litestream_lock": {

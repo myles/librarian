@@ -34,7 +34,7 @@ def add_book(isbn: str):
     )
 
 
-@cli.command(name="add_books")
+@cli.command(name="multi-add")
 def add_books():
     """
     Add multiple books to the library's collection through a text editor.

@@ -1,10 +1,10 @@
 from typing import Optional
 
 import click
-from sqlite_utils import Database
 
 from ...integrations.discogs import DiscogsClient
 from ...settings import Settings
+from ...utils.database import get_database
 from . import service
 
 
@@ -30,7 +30,7 @@ def add_vinyl(
     isbn: Optional[str] = None, discogs_release_id: Optional[int] = None
 ):
     """Add a vinyl record to the library's collection."""
-    db = Database(Settings.VINYL_DB_PATH)
+    db = get_database(Settings.VINYL_DB_PATH)
     service.build_database(db=db)
 
     client = DiscogsClient()
@@ -70,7 +70,7 @@ def update_artists():
     """
     Update all the artists in the DB.
     """
-    db = Database(Settings.VINYL_DB_PATH)
+    db = get_database(Settings.VINYL_DB_PATH)
     service.build_database(db=db)
 
     client = DiscogsClient()
